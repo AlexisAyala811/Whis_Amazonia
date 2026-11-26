@@ -29,6 +29,17 @@ La carpeta `dist/` queda lista para subir gratis a Netlify, Vercel o GitHub Page
 
 > El escáner QR con cámara, el micrófono y la instalación como app necesitan **HTTPS** (o `localhost`). En la red local por `http://192.168…` usa los botones de simulación y el dictado escrito.
 
+## Publicar en internet (HTTPS)
+
+La instalación como app, la cámara (QR) y el micrófono solo funcionan con **HTTPS**. El proyecto ya trae `netlify.toml`, así que publicarlo en Netlify es directo:
+
+1. Entra a https://app.netlify.com y elige **Add new site → Import an existing project → GitHub**.
+2. Selecciona el repositorio `Whis_Amazonia` y la rama `main`. Netlify lee `netlify.toml` solo (comando `npm run build`, carpeta `dist`).
+3. Pulsa **Deploy**. En un minuto tendrás una dirección `https://<nombre>.netlify.app`, con HTTPS incluido.
+4. Cada cambio que se suba a `main` se publica solo, y los celulares reciben la nueva versión al volver a abrir la app.
+
+**Otras opciones:** en Vercel funciona igual (detecta Vite solo). Para GitHub Pages, que publica en una subcarpeta, compila con `BASE_PATH=/Whis_Amazonia/ npm run build`.
+
 ## Qué incluye
 
 - **Inicio:** dinero en riesgo, caja recuperada, % de merma evitada, lista "Qué sacar primero hoy" y gráfico semanal.
