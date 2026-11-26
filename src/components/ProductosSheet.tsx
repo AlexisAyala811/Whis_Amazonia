@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { ChevronRight, Plus, Save, Trash2 } from 'lucide-react';
+import { useRef, useState } from 'react';
+import { Camera, ChevronRight, Plus, Save, Trash2 } from 'lucide-react';
 import {
   CATEGORIAS,
   SENSIBILIDADES,
@@ -10,8 +10,10 @@ import {
 import { useWhisStore } from '../hooks/useWhisStore';
 import type { CategoriaProducto, Producto } from '../types';
 import { soles, uid } from '../utils/fefoEngine';
+import { fotoCuadrada } from '../utils/fotos';
+import { emojiProducto } from '../utils/puesto';
 import { BottomSheet } from './ui/BottomSheet';
-import { ProductoIcono } from './ui/LoteBits';
+import { ProductoAvatar } from './ui/LoteBits';
 import { useToast } from './ui/Toast';
 
 interface Borrador {
@@ -23,6 +25,7 @@ interface Borrador {
   tempMax: string;
   factor: number;
   costo: string;
+  foto?: string;
 }
 
 const VACIO: Borrador = { id: null, nombre: '', categoria: 'frutas', dias: '', tempMin: '', tempMax: '', factor: 2.5, costo: '' };
@@ -38,6 +41,7 @@ export function ProductosSheet({ open, onClose }: { open: boolean; onClose: () =
   const { productos, guardarProducto, eliminarProducto, productoEnUso } = useWhisStore();
   const toast = useToast();
   const [b, setB] = useState<Borrador | null>(null);
+  const fotoRef = useRef<HTMLInputElement>(null);
 
   const cerrar = () => {
     setB(null);
@@ -54,6 +58,7 @@ export function ProductosSheet({ open, onClose }: { open: boolean; onClose: () =
       tempMax: String(p.tempMax),
       factor: p.factorRiesgoCalor,
       costo: String(p.costoRefKg),
+      foto: p.foto,
     });
 
   const nombre = b?.nombre.trim() ?? '';
@@ -89,6 +94,7 @@ export function ProductosSheet({ open, onClose }: { open: boolean; onClose: () =
       factorRiesgoCalor: b.factor,
       costoRefKg: costoNum,
       claves: [...new Set([...(previo?.claves ?? []), ...clavesDesdeNombre(nombre)])],
+      ...(b.foto ? { foto: b.foto } : {}),
     };
     guardarProducto(producto);
     toast('exito', previo ? 'Producto actualizado' : 'Producto agregado', `${producto.nombreCorto} · ${vidaTexto(producto.vidaBaseHoras)} de vida útil`);
@@ -136,9 +142,7 @@ export function ProductosSheet({ open, onClose }: { open: boolean; onClose: () =
                 onClick={() => editar(p)}
                 className="flex min-h-[56px] w-full items-center gap-3 rounded-2xl px-3 py-2 text-left transition-all duration-200 hover:bg-surface2 active:scale-[0.99]"
               >
-                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-surface2 text-muted">
-                  <ProductoIcono productoId={p.id} size={18} />
-                </span>
+                <ProductoAvatar productoId={p.id} tamano="sm" />
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-sm font-semibold">{p.nombreCorto}</span>
                   <span className="block truncate text-xs text-muted">
@@ -152,6 +156,43 @@ export function ProductosSheet({ open, onClose }: { open: boolean; onClose: () =
         </ul>
       ) : (
         <div className="space-y-4">
+          <div className="flex items-center gap-3">
+            {b.foto ? (
+              <img src={b.foto} alt="" className="h-16 w-16 shrink-0 rounded-[18px] object-cover" />
+            ) : (
+              <span className="grid h-16 w-16 shrink-0 place-items-center rounded-[18px] bg-gradient-to-br from-[#FBF3DC] to-[#EADFC2] text-3xl dark:from-surface2 dark:to-surface2">
+                {emojiProducto({ id: b.id ?? '', nombre: b.nombre, categoria: b.categoria })}
+              </span>
+            )}
+            <div className="min-w-0 flex-1 space-y-1.5">
+              <button type="button" className="btn-ghost w-full" onClick={() => fotoRef.current?.click()}>
+                <Camera size={16} /> {b.foto ? 'Cambiar foto' : 'Agregar foto'}
+              </button>
+              {b.foto && (
+                <button type="button" className="w-full text-xs font-semibold text-muted" onClick={() => setB({ ...b, foto: undefined })}>
+                  Quitar foto
+                </button>
+              )}
+            </div>
+            <input
+              ref={fotoRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={async (e) => {
+                const f = e.target.files?.[0];
+                e.target.value = '';
+                if (!f) return;
+                try {
+                  const foto = await fotoCuadrada(f);
+                  setB((x) => (x ? { ...x, foto } : x));
+                } catch {
+                  toast('error', 'No se pudo leer la foto');
+                }
+              }}
+            />
+          </div>
+
           <div>
             <span className="label">Nombre</span>
             <input

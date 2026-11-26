@@ -7,37 +7,7 @@ import { kg, soles, type LoteFefo } from '../utils/fefoEngine';
 import { BottomSheet } from './ui/BottomSheet';
 import { ModernSelect } from './ui/ModernSelect';
 import { useToast } from './ui/Toast';
-
-/** Reduce la foto a máx. 640 px y JPEG 60 % (≈40–70 KB) para guardarla offline sin llenar el almacenamiento. */
-const comprimirFoto = (file: File): Promise<string> =>
-  new Promise((resolve, reject) => {
-    const url = URL.createObjectURL(file);
-    const img = new Image();
-    img.onload = () => {
-      const max = 640;
-      const escala = Math.min(1, max / Math.max(img.width, img.height));
-      const canvas = document.createElement('canvas');
-      canvas.width = Math.round(img.width * escala);
-      canvas.height = Math.round(img.height * escala);
-      const ctx = canvas.getContext('2d');
-      if (!ctx) return reject(new Error('canvas'));
-      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-      // Sello de auditoría con fecha y hora
-      const sello = new Date().toLocaleString('es-PE');
-      ctx.fillStyle = 'rgba(0,0,0,0.55)';
-      ctx.fillRect(0, canvas.height - 28, canvas.width, 28);
-      ctx.fillStyle = '#fff';
-      ctx.font = '14px sans-serif';
-      ctx.fillText(`Whis · evidencia ${sello}`, 10, canvas.height - 9);
-      URL.revokeObjectURL(url);
-      resolve(canvas.toDataURL('image/jpeg', 0.6));
-    };
-    img.onerror = () => {
-      URL.revokeObjectURL(url);
-      reject(new Error('imagen'));
-    };
-    img.src = url;
-  });
+import { comprimirFoto } from '../utils/fotos';
 
 interface Props {
   lote: LoteFefo | null;

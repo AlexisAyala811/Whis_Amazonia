@@ -18,7 +18,7 @@ export default {
         danger: v('danger'),
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', '-apple-system', 'Segoe UI', 'Roboto', 'sans-serif'],
+        sans: ['"Plus Jakarta Sans Variable"', 'Inter', 'system-ui', '-apple-system', 'Segoe UI', 'Roboto', 'sans-serif'],
       },
       boxShadow: {
         soft: '0 8px 30px -12px rgb(0 0 0 / 0.35)',

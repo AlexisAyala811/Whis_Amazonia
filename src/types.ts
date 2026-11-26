@@ -18,6 +18,8 @@ export interface Producto {
   costoRefKg: number;
   /** Palabras clave para el dictado por voz */
   claves: string[];
+  /** Foto propia del producto (JPEG cuadrado pequeño, data URL) */
+  foto?: string;
 }
 
 export type CamaraId = 'camara1' | 'camara2' | 'almacen';

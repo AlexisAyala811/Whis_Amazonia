@@ -81,7 +81,7 @@ export default function App() {
   };
 
   return (
-    <div className="mx-auto min-h-dvh max-w-md bg-canvas sm:border-x sm:border-line">
+    <div className="mx-auto min-h-dvh max-w-md bg-canvas md:max-w-3xl md:border-x md:border-line">
       {/* Cabecera */}
       <header className="glass sticky top-0 z-30 border-b border-line pt-[env(safe-area-inset-top)]">
         <div className="flex h-16 items-center gap-2.5 px-4">
@@ -110,7 +110,7 @@ export default function App() {
         </div>
       </header>
 
-      <main key={vista} className="animate-fade-in px-4 pb-32 pt-4">
+      <main key={vista} className="animate-fade-in px-4 pb-32 pt-4 md:px-6">
         {vista === 'inicio' && (
           <DashboardView
             online={online}
@@ -130,7 +130,7 @@ export default function App() {
       </main>
 
       {/* Barra inferior */}
-      <nav className="fixed inset-x-0 bottom-0 z-40 mx-auto max-w-md border-t border-line bg-surface pb-[env(safe-area-inset-bottom)] shadow-[0_-8px_24px_-16px_rgb(0_0_0/0.25)]">
+      <nav className="fixed inset-x-0 bottom-0 z-40 mx-auto max-w-md border-t md:max-w-3xl border-line bg-surface pb-[env(safe-area-inset-bottom)] shadow-[0_-8px_24px_-16px_rgb(0_0_0/0.25)]">
         <div className="grid grid-cols-5 items-end px-1 pb-1.5 pt-1">
           {TABS.slice(0, 2).map((t) => (
             <TabBtn key={t.id} tab={t} activo={vista === t.id} onClick={() => irA(t.id)} />
