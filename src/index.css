@@ -1,0 +1,172 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ---------- Tokens de tema ---------- */
+:root {
+  /* Warm Cream (claro) */
+  --bg: 248 246 242;
+  --surface: 255 255 255;
+  --surface2: 241 237 230;
+  --line: 231 226 218;
+  --ink: 24 24 27;
+  --muted: 113 113 122;
+  --brand: 22 163 74;
+  --ok: 22 163 74;
+  --warn: 217 119 6;
+  --danger: 220 38 38;
+  --glass: 255 255 255;
+  --scroll: 0 0 0;
+  color-scheme: light;
+}
+
+.dark {
+  /* Obsidian Dark (por defecto) */
+  --bg: 13 15 18;
+  --surface: 22 25 31;
+  --surface2: 30 34 42;
+  --line: 255 255 255;
+  --ink: 244 244 245;
+  --muted: 161 161 170;
+  --brand: 74 222 128;
+  --ok: 74 222 128;
+  --warn: 251 191 36;
+  --danger: 248 113 113;
+  --glass: 22 25 31;
+  --scroll: 255 255 255;
+  color-scheme: dark;
+}
+
+@layer base {
+  html,
+  body {
+    @apply bg-canvas text-ink antialiased;
+    -webkit-tap-highlight-color: transparent;
+    overscroll-behavior-y: none;
+  }
+  body {
+    overflow-x: hidden;
+  }
+  /* En oscuro, los bordes "line" son blancos al 8 % */
+  .dark .border-line {
+    border-color: rgb(255 255 255 / 0.08);
+  }
+  .dark .divide-line > :not([hidden]) ~ :not([hidden]) {
+    border-color: rgb(255 255 255 / 0.08);
+  }
+  input[type='number']::-webkit-inner-spin-button,
+  input[type='number']::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  input[type='number'] {
+    -moz-appearance: textfield;
+  }
+}
+
+@layer components {
+  .card {
+    @apply rounded-2xl border border-line bg-surface;
+  }
+  .glass {
+    background: rgb(var(--glass) / 0.72);
+    @apply backdrop-blur-md;
+  }
+  .btn {
+    @apply inline-flex min-h-[44px] items-center justify-center gap-2 rounded-2xl px-4 text-sm font-semibold transition-all duration-200 ease-out active:scale-[0.97] disabled:pointer-events-none disabled:opacity-40;
+  }
+  .btn-primary {
+    @apply btn bg-brand text-white dark:text-[#0D0F12];
+  }
+  .btn-ghost {
+    @apply btn border border-line bg-surface text-ink hover:bg-surface2;
+  }
+  .btn-danger {
+    @apply btn bg-danger text-white dark:text-[#0D0F12];
+  }
+  .field {
+    @apply min-h-[44px] w-full rounded-2xl border border-line bg-surface2/60 px-4 text-[15px] text-ink outline-none transition-all duration-200 placeholder:text-muted focus:border-brand focus:ring-2 focus:ring-brand/25;
+  }
+  .label {
+    @apply mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted;
+  }
+  .pill {
+    @apply inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold;
+  }
+}
+
+@layer utilities {
+  .no-scrollbar {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+/* ---------- Scrollbars modernas ultrafinas ---------- */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(var(--scroll) / 0.18) transparent;
+}
+*::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+*::-webkit-scrollbar-thumb {
+  background: rgb(var(--scroll) / 0.16);
+  border-radius: 9999px;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: rgb(var(--scroll) / 0.32);
+}
+
+/* Slider de descuento */
+input[type='range'].slider {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 8px;
+  border-radius: 9999px;
+  background: linear-gradient(
+    to right,
+    rgb(var(--brand)) 0%,
+    rgb(var(--brand)) var(--fill, 50%),
+    rgb(var(--line)) var(--fill, 50%),
+    rgb(var(--line)) 100%
+  );
+  outline: none;
+}
+.dark input[type='range'].slider {
+  background: linear-gradient(
+    to right,
+    rgb(var(--brand)) 0%,
+    rgb(var(--brand)) var(--fill, 50%),
+    rgb(255 255 255 / 0.1) var(--fill, 50%),
+    rgb(255 255 255 / 0.1) 100%
+  );
+}
+input[type='range'].slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 9999px;
+  background: rgb(var(--surface));
+  border: 3px solid rgb(var(--brand));
+  box-shadow: 0 4px 14px rgb(0 0 0 / 0.25);
+  cursor: pointer;
+}
+input[type='range'].slider::-moz-range-thumb {
+  width: 24px;
+  height: 24px;
+  border-radius: 9999px;
+  background: rgb(var(--surface));
+  border: 3px solid rgb(var(--brand));
+  cursor: pointer;
+}
