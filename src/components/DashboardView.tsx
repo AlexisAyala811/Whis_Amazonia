@@ -14,18 +14,24 @@ interface Props {
 
 const SEMANA_MS = 7 * 24 * 3_600_000;
 
+/** Etiquetas compactas del eje Y: 2600 → "2.6k" */
+const ejeSoles = (v: number): string =>
+  v >= 1000 ? `${(v / 1000).toLocaleString('es-PE', { maximumFractionDigits: 1 })}k` : String(v);
+
 export function DashboardView({ online, onDespachar, onLiquidar, onVerLotes }: Props) {
   const { data, activos, ahora } = useWhisStore();
 
   const kpi = useMemo(() => {
     const enRiesgo = activos.filter((l) => l.fefo.semaforo !== 'verde');
     const dineroRiesgo = enRiesgo.reduce((s, l) => s + l.fefo.valorComercial, 0);
-    const recuperado =
-      data.historialSemanal.reduce((s, w) => s + w.recuperado, 0) +
-      data.liquidaciones.reduce((s, l) => s + l.total, 0);
+    // Caja Recuperada: solo liquidaciones reales registradas en la app (arranca en S/ 0)
+    const recuperado = data.liquidaciones.reduce((s, l) => s + l.total, 0);
+    // Merma evitada: incluye el historial semanal para tener tendencia desde el primer día
+    const recuperadoTotal = data.historialSemanal.reduce((s, w) => s + w.recuperado, 0) + recuperado;
     const perdido =
       data.historialSemanal.reduce((s, w) => s + w.perdido, 0) + data.bajas.reduce((s, b) => s + b.valorPerdido, 0);
-    const mermaEvitada = recuperado + perdido > 0 ? Math.round((recuperado / (recuperado + perdido)) * 100) : 0;
+    const mermaEvitada =
+      recuperadoTotal + perdido > 0 ? Math.round((recuperadoTotal / (recuperadoTotal + perdido)) * 100) : 0;
     return {
       dineroRiesgo,
       rojos: enRiesgo.filter((l) => l.fefo.semaforo === 'rojo').length,
@@ -90,7 +96,7 @@ export function DashboardView({ online, onDespachar, onLiquidar, onVerLotes }: P
             <Banknote size={16} className="text-ok" />
           </div>
           <p className="mt-1 text-xl font-bold tabular-nums">{solesCorto(kpi.recuperado)}</p>
-          <p className="text-[11px] text-muted">por liquidaciones</p>
+          <p className="text-[11px] text-muted">{data.liquidaciones.length} {data.liquidaciones.length === 1 ? 'liquidación' : 'liquidaciones'}</p>
         </div>
         <div className="card p-4">
           <div className="flex items-center justify-between">
@@ -148,10 +154,16 @@ export function DashboardView({ online, onDespachar, onLiquidar, onVerLotes }: P
         <p className="mb-3 text-xs text-muted">Soles por semana</p>
         <div className="h-52 w-full">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={semanal} margin={{ top: 4, right: 0, left: -18, bottom: 0 }} barGap={2}>
+            <BarChart data={semanal} margin={{ top: 4, right: 0, left: 0, bottom: 0 }} barGap={2}>
               <CartesianGrid vertical={false} stroke="rgb(var(--muted) / 0.15)" />
-              <XAxis dataKey="semana" tick={{ fontSize: 10, fill: 'rgb(var(--muted))' }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fontSize: 10, fill: 'rgb(var(--muted))' }} axisLine={false} tickLine={false} width={44} />
+              <XAxis dataKey="semana" interval={0} tick={{ fontSize: 9, fill: 'rgb(var(--muted))' }} axisLine={false} tickLine={false} />
+              <YAxis
+                tick={{ fontSize: 10, fill: 'rgb(var(--muted))' }}
+                axisLine={false}
+                tickLine={false}
+                width={40}
+                tickFormatter={ejeSoles}
+              />
               <Tooltip
                 cursor={{ fill: 'rgb(var(--muted) / 0.08)' }}
                 contentStyle={{

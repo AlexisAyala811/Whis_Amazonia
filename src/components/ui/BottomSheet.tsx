@@ -91,7 +91,7 @@ export function BottomSheet({ open, onClose, title, subtitle, children, footer, 
             <button
               onClick={onClose}
               aria-label="Cerrar"
-              className="-mr-1 grid h-10 w-10 shrink-0 place-items-center rounded-full bg-surface2 text-muted transition-all duration-200 hover:text-ink active:scale-95"
+              className="-mr-1 grid h-11 w-11 shrink-0 place-items-center rounded-full bg-surface2 text-muted transition-all duration-200 hover:text-ink active:scale-95"
             >
               <X size={18} />
             </button>

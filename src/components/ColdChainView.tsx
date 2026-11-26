@@ -193,7 +193,7 @@ export function ColdChainView() {
                 step={0.5}
                 value={horas}
                 onChange={(e) => setHoras(Math.max(0.5, Number(e.target.value) || 0.5))}
-                className="field min-h-[40px] w-24 text-center"
+                className="field min-h-[44px] w-24 text-center"
               />
               <span className="text-xs text-muted">horas</span>
             </div>

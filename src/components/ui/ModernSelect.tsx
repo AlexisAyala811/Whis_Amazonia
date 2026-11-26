@@ -52,7 +52,7 @@ export function ModernSelect<T extends string>({
         type="button"
         onClick={() => setOpen(true)}
         className={`flex w-full items-center gap-3 rounded-2xl border border-line bg-surface2/60 text-left transition-all duration-200 ease-out hover:border-brand/50 active:scale-[0.99] ${
-          compact ? 'min-h-[40px] px-3' : 'min-h-[48px] px-4'
+          compact ? 'min-h-[44px] px-3' : 'min-h-[48px] px-4'
         }`}
       >
         {actual?.icon && <span className="shrink-0 text-muted">{actual.icon}</span>}
