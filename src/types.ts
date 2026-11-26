@@ -54,6 +54,7 @@ export interface Lote {
   horasApagonEnCamara?: number;
   condicionLlegada: CondicionLlegada;
   estado: EstadoLote;
+  envase?: Envase;
 }
 
 export interface EventoTermico {
@@ -104,12 +105,28 @@ export interface Liquidacion {
   compradorId: string;
 }
 
+export type CanalVenta = 'mayorista' | 'minorista' | 'puesto';
+export type MedioPago = 'efectivo' | 'yape' | 'credito';
+
 export interface Despacho {
   id: string;
   loteId: string;
   fecha: string;
   pesoKg: number;
   total: number;
+  /** Precio cobrado por kg (si falta, el precio de venta del lote) */
+  precioKg?: number;
+  canal?: CanalVenta;
+  medioPago?: MedioPago;
+}
+
+export type TipoEnvase = 'jaba' | 'caja' | 'saco';
+
+/** Cómo llegó empacado el lote (para mostrar jabas/cajas además de kg) */
+export interface Envase {
+  tipo: TipoEnvase;
+  cantidad: number;
+  kgPorEnvase: number;
 }
 
 export interface ResumenSemanal {
@@ -135,11 +152,37 @@ export interface AppData {
   productos?: Producto[];
   /** Metas del negocio (gamificación). Si falta, se usan las de por defecto. */
   metas?: Metas;
+  /** Logros desbloqueados y última meta diaria celebrada */
+  progreso?: RegistroProgreso;
+}
+
+export interface CambioMeta {
+  /** Día local "AAAA-MM-DD" desde el que rige la meta */
+  desde: string;
+  soles: number;
 }
 
 export interface Metas {
-  /** Soles a recuperar por remates cada día */
+  /** Soles a recuperar por remates cada día (meta vigente) */
   rescateDiarioSoles: number;
+  /** Historial de cambios: cada día se evalúa con la meta que regía ese día */
+  historial?: CambioMeta[];
+}
+
+export interface RegistroProgreso {
+  /** id del logro → fecha ISO en que se desbloqueó */
+  logros: Record<string, string>;
+  /** Último día local en que se celebró la meta cumplida */
+  metaCelebrada?: string;
+}
+
+/** Algo que merece una celebración en pantalla */
+export interface Festejo {
+  id: string;
+  tipo: 'meta' | 'logro';
+  titulo: string;
+  detalle: string;
+  icono: 'remate' | 'kg' | 'caja' | 'racha' | 'reloj' | 'meta';
 }
 
 export interface FefoResultado {

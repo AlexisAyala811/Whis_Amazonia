@@ -1,4 +1,4 @@
-import type { AppData, CamaraId, CompradorB2B, CondicionLlegada, EventoTermico, Lote, ResumenSemanal } from '../types';
+import type { AppData, CamaraId, CompradorB2B, CondicionLlegada, Envase, EventoTermico, Lote, ResumenSemanal } from '../types';
 import { MARGEN_VENTA, getProducto } from './catalog';
 import { exposicionParaPorcentaje } from '../utils/fefoEngine';
 
@@ -15,18 +15,19 @@ interface SemillaLote {
   horasEnCamara: number;
   /** Porcentaje de vida útil con el que debe arrancar la demo */
   porcentajeObjetivo: number;
+  envase?: Envase;
 }
 
 // 2 rojos, 3 amarillos, 3 verdes
 const SEMILLAS: SemillaLote[] = [
   { codigo: 'J-096', productoId: 'pescado', camaraId: 'camara1', pesoKg: 45, condicion: 'sinfrio6', horasEnCamara: 30, porcentajeObjetivo: 12 },
-  { codigo: 'J-097', productoId: 'camu', camaraId: 'camara2', pesoKg: 60, condicion: 'sinfrio6', horasEnCamara: 50, porcentajeObjetivo: 15 },
+  { codigo: 'J-097', productoId: 'camu', camaraId: 'camara2', pesoKg: 60, condicion: 'sinfrio6', horasEnCamara: 50, porcentajeObjetivo: 15, envase: { tipo: 'jaba', cantidad: 3, kgPorEnvase: 20 } },
   { codigo: 'J-098', productoId: 'pollo', camaraId: 'camara1', pesoKg: 80, condicion: 'retraso3', horasEnCamara: 40, porcentajeObjetivo: 38 },
   { codigo: 'J-099', productoId: 'queso', camaraId: 'camara2', pesoKg: 35, condicion: 'retraso3', horasEnCamara: 70, porcentajeObjetivo: 42 },
-  { codigo: 'J-100', productoId: 'aguaje', camaraId: 'camara2', pesoKg: 120, condicion: 'sinfrio6', horasEnCamara: 50, porcentajeObjetivo: 30 },
+  { codigo: 'J-100', productoId: 'aguaje', camaraId: 'camara2', pesoKg: 120, condicion: 'sinfrio6', horasEnCamara: 50, porcentajeObjetivo: 30, envase: { tipo: 'saco', cantidad: 3, kgPorEnvase: 40 } },
   { codigo: 'J-101', productoId: 'res', camaraId: 'camara1', pesoKg: 95, condicion: 'retraso3', horasEnCamara: 20, porcentajeObjetivo: 78 },
-  { codigo: 'J-102', productoId: 'cocona', camaraId: 'camara2', pesoKg: 70, condicion: 'retraso3', horasEnCamara: 24, porcentajeObjetivo: 74 },
-  { codigo: 'J-103', productoId: 'platano', camaraId: 'almacen', pesoKg: 250, condicion: 'optimo', horasEnCamara: 30, porcentajeObjetivo: 80 },
+  { codigo: 'J-102', productoId: 'cocona', camaraId: 'camara2', pesoKg: 70, condicion: 'retraso3', horasEnCamara: 24, porcentajeObjetivo: 74, envase: { tipo: 'caja', cantidad: 5, kgPorEnvase: 14 } },
+  { codigo: 'J-103', productoId: 'platano', camaraId: 'almacen', pesoKg: 250, condicion: 'optimo', horasEnCamara: 30, porcentajeObjetivo: 80, envase: { tipo: 'jaba', cantidad: 10, kgPorEnvase: 25 } },
 ];
 
 const redondear = (n: number, d = 2) => Math.round(n * 10 ** d) / 10 ** d;
@@ -67,6 +68,7 @@ export const crearDatosSemilla = (ahora: number = Date.now()): AppData => {
       horasExposicionCalor: redondear(exposicionParaPorcentaje(s.productoId, s.horasEnCamara, s.porcentajeObjetivo), 1),
       condicionLlegada: s.condicion,
       estado: 'activo',
+      ...(s.envase ? { envase: s.envase } : {}),
     };
   });
 

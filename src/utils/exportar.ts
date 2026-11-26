@@ -1,6 +1,7 @@
 import { CAMARAS, MOTIVOS_BAJA, getProducto } from '../data/catalog';
 import type { AppData } from '../types';
 import { calcularFefo } from './fefoEngine';
+import { calcularLogros, calcularProgreso } from './logros';
 
 const celda = (v: string | number) => {
   const s = String(v);
@@ -31,6 +32,8 @@ const dec = (n: number) => n.toFixed(2).replace('.', ',');
 
 export function exportarCSV(data: AppData) {
   const ahora = Date.now();
+  const prog = calcularProgreso(data, ahora);
+  const logros = calcularLogros(prog);
   const filas: (string | number)[][] = [
     ['REPORTE WHIS', new Date().toLocaleString('es-PE')],
     [],
@@ -90,6 +93,22 @@ export function exportarCSV(data: AppData) {
       e.pasaronAAmarillo,
       e.pasaronARojo,
       e.nota ?? '',
+    ]),
+    [],
+    ['PROGRESO'],
+    ['Meta diaria S/', dec(prog.meta)],
+    ['Rescatado hoy S/', dec(prog.hoy.rescatado)],
+    ['Días seguidos sin merma', prog.racha],
+    ['Mejor racha (días)', prog.mejorRacha],
+    ['Rescatado últimos 7 días %', prog.aprovechamiento ?? ''],
+    ['Días con meta cumplida', prog.diasMetaCumplida],
+    [],
+    ['Logro', 'Avance', 'Objetivo', 'Logrado el'],
+    ...logros.map((l) => [
+      l.titulo,
+      l.unidad === 'S/' ? dec(l.actual) : Math.round(l.actual),
+      l.objetivo,
+      l.logrado && data.progreso?.logros[l.id] ? new Date(data.progreso.logros[l.id]).toLocaleDateString('es-PE') : '',
     ]),
   ];
   descargar(csv(filas), `whis-reporte-${fecha()}.csv`, 'text/csv;charset=utf-8');

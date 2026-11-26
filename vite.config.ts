@@ -24,8 +24,8 @@ export default defineConfig(({ mode }) => {
           description:
             'Gestión FEFO térmica de perecibles y liquidación relámpago B2B por WhatsApp. Funciona sin internet.',
           lang: 'es-PE',
-          theme_color: '#0D0F12',
-          background_color: '#0D0F12',
+          theme_color: '#15572E',
+          background_color: '#F4F1E8',
           display: 'standalone',
           orientation: 'portrait',
           start_url: base,

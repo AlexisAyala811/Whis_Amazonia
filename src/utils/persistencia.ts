@@ -1,5 +1,6 @@
 import { DATA_VERSION, crearDatosSemilla, crearDatosVacios } from '../data/seedData';
 import type { AppData } from '../types';
+import { sanearGamificacion } from './logros';
 
 export const STORAGE_KEY = 'whis-amazonia:data';
 /** Copia intacta de datos que no se pudieron abrir, para no perderlos nunca. */
@@ -45,11 +46,7 @@ export function validarYMigrar(entrada: unknown): ResultadoValidacion {
       );
     if (!ok) return { ok: false, motivo: 'La sección "productos" está dañada.' };
   }
-  if (data.metas !== undefined) {
-    const m = data.metas as Record<string, unknown> | null;
-    // Una meta dañada no invalida el respaldo: se vuelve a la de por defecto
-    if (!m || typeof m.rescateDiarioSoles !== 'number' || !(m.rescateDiarioSoles > 0)) delete data.metas;
-  }
+  sanearGamificacion(data);
   if (data.modo !== 'demo' && data.modo !== 'real') {
     // Datos creados antes de existir el modo: si conservan los lotes semilla, eran demo.
     data.modo = (data.lotes as { id?: string }[]).some((l) => l?.id?.startsWith('lote_seed_')) ? 'demo' : 'real';

@@ -1,7 +1,7 @@
-import { Beef, Cherry, Fish, Milk, Package } from 'lucide-react';
 import { getProducto } from '../../data/catalog';
 import type { Semaforo } from '../../types';
 import { SEMAFORO_INFO } from '../../utils/fefoEngine';
+import { emojiProducto } from '../../utils/puesto';
 
 export function SemaforoBadge({ semaforo }: { semaforo: Semaforo }) {
   const s = SEMAFORO_INFO[semaforo];
@@ -24,11 +24,25 @@ export function LifeBar({ porcentaje, semaforo }: { porcentaje: number; semaforo
   );
 }
 
+/** Ícono del producto (se mantiene por compatibilidad: ahora es el emoji) */
 export function ProductoIcono({ productoId, size = 18 }: { productoId: string; size?: number }) {
-  const cat = getProducto(productoId).categoria;
-  if (cat === 'pescados') return <Fish size={size} />;
-  if (cat === 'carnes') return <Beef size={size} />;
-  if (cat === 'lacteos') return <Milk size={size} />;
-  if (cat === 'frutas') return <Cherry size={size} />;
-  return <Package size={size} />;
+  return (
+    <span aria-hidden style={{ fontSize: size, lineHeight: 1 }}>
+      {emojiProducto(getProducto(productoId))}
+    </span>
+  );
+}
+
+const TAMANOS = { sm: 'h-10 w-10 text-xl rounded-2xl', md: 'h-12 w-12 text-2xl rounded-2xl', lg: 'h-14 w-14 text-[28px] rounded-[18px]' };
+
+/** Avatar cuadrado del producto, al estilo de una foto de góndola */
+export function ProductoAvatar({ productoId, tamano = 'md', className = '' }: { productoId: string; tamano?: keyof typeof TAMANOS; className?: string }) {
+  return (
+    <span
+      aria-hidden
+      className={`grid shrink-0 place-items-center bg-gradient-to-br from-[#FBF3DC] to-[#EADFC2] leading-none shadow-inner dark:from-surface2 dark:to-surface2 ${TAMANOS[tamano]} ${className}`}
+    >
+      {emojiProducto(getProducto(productoId))}
+    </span>
+  );
 }

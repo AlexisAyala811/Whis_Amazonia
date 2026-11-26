@@ -23,7 +23,7 @@ export function useTheme(): [Tema, () => void] {
   );
   useEffect(() => {
     document.documentElement.classList.toggle('dark', tema === 'dark');
-    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', tema === 'dark' ? '#0D0F12' : '#F8F6F2');
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', tema === 'dark' ? '#0D0F12' : '#F4F1E8');
     try {
       localStorage.setItem('whis-theme', tema);
     } catch {
