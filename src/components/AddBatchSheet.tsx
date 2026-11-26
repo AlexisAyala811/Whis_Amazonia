@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Cherry, Mic, MicOff, PackagePlus, Snowflake, Sparkles, ThermometerSun, Timer, Warehouse } from 'lucide-react';
-import { CAMARAS, CATALOGO, CONDICIONES, MARGEN_VENTA, camaraSugerida, getProducto } from '../data/catalog';
+import { CAMARAS, CONDICIONES, MARGEN_VENTA, camaraSugerida, getProducto } from '../data/catalog';
 import { useWhisStore } from '../hooks/useWhisStore';
 import type { CamaraId, CondicionLlegada } from '../types';
 import { calcularFefo, formatoHoras, soles } from '../utils/fefoEngine';
@@ -45,7 +45,7 @@ interface Props {
 }
 
 export function AddBatchSheet({ open, onClose }: Props) {
-  const { agregarLote, siguienteCodigo } = useWhisStore();
+  const { agregarLote, siguienteCodigo, productos } = useWhisStore();
   const toast = useToast();
 
   const [codigo, setCodigo] = useState('');
@@ -159,12 +159,12 @@ export function AddBatchSheet({ open, onClose }: Props) {
       // Formatos aceptados: "J-105" o "J-105|pollo|camara1|80"
       const [cod, prod, cam, kgs] = texto.trim().split('|');
       setCodigo(cod.slice(0, 20));
-      if (prod && CATALOGO.some((p) => p.id === prod)) elegirProducto(prod);
+      if (prod && productos.some((p) => p.id === prod)) elegirProducto(prod);
       if (cam && CAMARAS.some((c) => c.id === cam)) setCamaraId(cam as CamaraId);
       if (kgs && Number(kgs) > 0) setPeso(kgs);
       toast('exito', `QR leído: jaba ${cod}`);
     },
-    [elegirProducto, toast],
+    [elegirProducto, toast, productos],
   );
 
   const simularQr = () => onQr(`${siguienteCodigo()}|pollo|camara1|80`);
@@ -281,10 +281,10 @@ export function AddBatchSheet({ open, onClose }: Props) {
             onChange={elegirProducto}
             searchable
             placeholder="Elegir producto"
-            options={CATALOGO.map((p) => ({
+            options={productos.map((p) => ({
               value: p.id,
               label: p.nombreCorto,
-              description: `${p.vidaBaseHoras} h · ${p.tempMin}–${p.tempMax} °C · calor ×${p.factorRiesgoCalor}`,
+              description: `${p.vidaBaseHoras < 48 ? `${p.vidaBaseHoras} h` : `${+(p.vidaBaseHoras / 24).toFixed(1)} días`} · ${p.tempMin}–${p.tempMax} °C`,
               icon: <ProductoIcono productoId={p.id} size={18} />,
             }))}
           />

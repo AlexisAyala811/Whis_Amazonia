@@ -30,6 +30,21 @@ export function validarYMigrar(entrada: unknown): ResultadoValidacion {
     if (data[k] === undefined) data[k] = [];
     if (!Array.isArray(data[k])) return { ok: false, motivo: `La sección "${k}" está dañada.` };
   }
+  if (data.productos !== undefined) {
+    const ok =
+      Array.isArray(data.productos) &&
+      (data.productos as Record<string, unknown>[]).every(
+        (p) =>
+          p &&
+          typeof p.id === 'string' &&
+          typeof p.nombreCorto === 'string' &&
+          typeof p.vidaBaseHoras === 'number' &&
+          p.vidaBaseHoras > 0 &&
+          typeof p.factorRiesgoCalor === 'number' &&
+          Array.isArray(p.claves),
+      );
+    if (!ok) return { ok: false, motivo: 'La sección "productos" está dañada.' };
+  }
   if (data.modo !== 'demo' && data.modo !== 'real') {
     // Datos creados antes de existir el modo: si conservan los lotes semilla, eran demo.
     data.modo = (data.lotes as { id?: string }[]).some((l) => l?.id?.startsWith('lote_seed_')) ? 'demo' : 'real';

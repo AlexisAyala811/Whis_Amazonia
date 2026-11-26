@@ -1,6 +1,6 @@
 export type Semaforo = 'verde' | 'amarillo' | 'rojo';
 
-export type CategoriaProducto = 'carnes' | 'pescados' | 'lacteos' | 'frutas';
+export type CategoriaProducto = 'carnes' | 'pescados' | 'lacteos' | 'frutas' | 'otros';
 
 export interface Producto {
   id: string;
@@ -131,6 +131,8 @@ export interface AppData {
   liquidaciones: Liquidacion[];
   despachos: Despacho[];
   historialSemanal: ResumenSemanal[];
+  /** Catálogo propio del negocio. Si falta, se usa el catálogo base. */
+  productos?: Producto[];
 }
 
 export interface FefoResultado {

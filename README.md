@@ -44,10 +44,11 @@ La instalación como app, la cámara (QR) y el micrófono solo funcionan con **H
 
 - **Inicio:** dinero en riesgo, caja recuperada, % de merma evitada, lista "Qué sacar primero hoy" y gráfico semanal.
 - **Botón +:** registro de lote en segundos por QR (o "Simular J-104"), por voz ("Ingresan 80 kilos de pollo a cámara 1 con 2 horas sin frío") o tocando.
-- **Lotes:** filtros por semáforo y cámara, despacho parcial/total, curva térmica estimada y baja por merma con **foto obligatoria**.
+- **Lotes:** filtros por semáforo y cámara. Al tocar un lote se abren todas sus acciones: despacho parcial/total, liquidar, curva térmica estimada, **corregir datos** (jaba, producto, cámara, peso, precios) y baja por merma con **foto obligatoria**.
+- **Deshacer:** tras registrar, despachar, liquidar, dar de baja, corregir o registrar un apagón aparece unos segundos el botón **Deshacer** sobre la barra inferior.
 - **Frío/Alertas:** registro de cortes de luz que recalcula al instante todos los lotes de la cámara y deja bitácora.
 - **Liquidar:** descuento 20–50 %, agenda de compradores, mensaje automático y envío por WhatsApp; "Marcar como Liquidado" suma a Caja Recuperada.
-- **Ajustes (ícono de la esquina):** tema claro/oscuro, exportar CSV (abre en Excel), exportar y restaurar respaldo JSON, borrar todo o cargar la demo.
+- **Ajustes (ícono de la esquina):** **Mis productos** (agregar o editar productos con su vida útil, temperatura ideal, sensibilidad al calor y costo), tema claro/oscuro, exportar CSV (abre en Excel), exportar y restaurar respaldo JSON, borrar todo o cargar la demo.
 
 ## Importante antes de usarla en serio
 
@@ -65,7 +66,7 @@ horasRestantes    = max(0, vidaBase − horasEquivalentes)
 % vida útil       = horasRestantes / vidaBase × 100
 Verde > 50 %  ·  Amarillo 20–50 %  ·  Rojo < 20 %
 ```
-Catálogo y factores: `src/data/catalog.ts`. Lógica: `src/utils/fefoEngine.ts`.
+Catálogo base y factores: `src/data/catalog.ts` (cada negocio puede reemplazarlo desde **Ajustes → Mis productos**; se guarda junto con sus datos y en el respaldo JSON). Lógica: `src/utils/fefoEngine.ts`.
 
 ## Estructura
 

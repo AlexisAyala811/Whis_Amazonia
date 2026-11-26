@@ -1,5 +1,5 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
-import { CONDICIONES, getProducto } from '../data/catalog';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { CONDICIONES, getProducto, usarCatalogo } from '../data/catalog';
 import { crearDatosSemilla, crearDatosVacios } from '../data/seedData';
 import type {
   AppData,
@@ -11,6 +11,7 @@ import type {
   Liquidacion,
   Lote,
   MotivoBaja,
+  Producto,
   Semaforo,
 } from '../types';
 import { calcularFefo, conApagon, ordenarFefo, uid, type LoteFefo } from '../utils/fefoEngine';
@@ -32,6 +33,15 @@ export interface NuevoLoteInput {
   condicionLlegada: CondicionLlegada;
   /** Horas extra sin frío (p. ej. dictadas por voz) además de la condición */
   horasExtraCalor?: number;
+}
+
+/** Datos de un lote que se pueden corregir después de registrarlo */
+export type CambiosLote = Partial<Pick<Lote, 'codigoQR' | 'productoId' | 'camaraId' | 'pesoKg' | 'costoKg' | 'precioVentaKg'>>;
+
+/** Última acción que se puede deshacer */
+export interface Deshacer {
+  id: number;
+  texto: string;
 }
 
 export interface ResultadoApagon {
@@ -61,6 +71,16 @@ interface Store {
   agregarComprador: (c: Omit<CompradorB2B, 'id'>) => CompradorB2B;
   eliminarComprador: (id: string) => void;
   siguienteCodigo: () => string;
+  /** Productos activos (catálogo del negocio o el base) */
+  productos: Producto[];
+  guardarProducto: (p: Producto) => void;
+  /** Borra un producto; devuelve false si tiene lotes o registros */
+  eliminarProducto: (id: string) => boolean;
+  productoEnUso: (id: string) => boolean;
+  editarLote: (loteId: string, cambios: CambiosLote) => void;
+  deshacer: Deshacer | null;
+  deshacerUltimo: () => string | null;
+  olvidarDeshacer: () => void;
 }
 
 const StoreCtx = createContext<Store | null>(null);
@@ -76,6 +96,31 @@ export function WhisStoreProvider({ children }: { children: ReactNode }) {
   const [recuperacion, setRecuperacion] = useState(
     carga.tipo === 'recuperacion' ? { motivo: carga.motivo, copiaGuardada: carga.copiaGuardada } : null,
   );
+
+  // Deshacer: se guarda la foto de los datos justo antes de la última acción.
+  // Solo la última acción se puede deshacer, así restaurar nunca pisa otra.
+  const dataRef = useRef(data);
+  dataRef.current = data;
+  const previoRef = useRef<AppData | null>(null);
+  const [deshacer, setDeshacer] = useState<Deshacer | null>(null);
+  const recordar = (texto: string) => {
+    previoRef.current = dataRef.current;
+    setDeshacer({ id: Date.now(), texto });
+  };
+  const olvidarDeshacer = useCallback(() => {
+    previoRef.current = null;
+    setDeshacer(null);
+  }, []);
+  const deshacerUltimo = useCallback((): string | null => {
+    const previo = previoRef.current;
+    if (!previo) return null;
+    const texto = deshacer?.texto ?? null;
+    previoRef.current = null;
+    setDeshacer(null);
+    setData(previo);
+    setAhora(Date.now());
+    return texto;
+  }, [deshacer]);
 
   // Persistencia local automática. Si hay datos sin poder abrir y no se logró
   // guardarlos aparte, no se escribe nada hasta que el usuario decida.
@@ -95,7 +140,9 @@ export function WhisStoreProvider({ children }: { children: ReactNode }) {
     return () => window.clearInterval(t);
   }, []);
 
-  const activos = useMemo(() => ordenarFefo(data.lotes, ahora), [data.lotes, ahora]);
+  // El catálogo activo se fija antes de calcular el FEFO de los lotes
+  const productos = useMemo(() => usarCatalogo(data.productos), [data.productos]);
+  const activos = useMemo(() => ordenarFefo(data.lotes, ahora), [data.lotes, ahora, productos]);
 
   const actualizarLote = (lotes: Lote[], id: string, fn: (l: Lote) => Lote) =>
     lotes.map((l) => (l.id === id ? fn(l) : l));
@@ -116,12 +163,14 @@ export function WhisStoreProvider({ children }: { children: ReactNode }) {
       condicionLlegada: input.condicionLlegada,
       estado: 'activo',
     };
+    recordar(`Lote ${lote.codigoQR} registrado`);
     setData((d) => ({ ...d, lotes: [lote, ...d.lotes] }));
     setAhora(Date.now());
     return lote;
   }, []);
 
   const despachar = useCallback((loteId: string, pesoKg: number) => {
+    recordar('Despacho registrado');
     setData((d) => {
       const lote = d.lotes.find((l) => l.id === loteId);
       if (!lote) return d;
@@ -168,6 +217,7 @@ export function WhisStoreProvider({ children }: { children: ReactNode }) {
         ...resultado,
       };
       const ids = new Set(afectados.map((l) => l.id));
+      recordar(`Apagón de ${horas} h registrado`);
       setData((d) => ({
         ...d,
         lotes: d.lotes.map((l) =>
@@ -182,6 +232,7 @@ export function WhisStoreProvider({ children }: { children: ReactNode }) {
   );
 
   const darDeBaja = useCallback((loteId: string, motivo: MotivoBaja, pesoKg: number, fotoEvidencia: string) => {
+    recordar('Baja registrada');
     setData((d) => {
       const lote = d.lotes.find((l) => l.id === loteId);
       if (!lote) return d;
@@ -228,6 +279,7 @@ export function WhisStoreProvider({ children }: { children: ReactNode }) {
         total: +(lote.pesoKg * precioRemateKg).toFixed(2),
         compradorId,
       };
+      recordar(`Lote ${lote.codigoQR} liquidado`);
       setData((d) => ({
         ...d,
         lotes: actualizarLote(d.lotes, loteId, (l) => ({ ...l, pesoKg: 0, estado: 'liquidado' })),
@@ -245,10 +297,12 @@ export function WhisStoreProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const eliminarComprador = useCallback((id: string) => {
+    recordar('Comprador eliminado');
     setData((d) => ({ ...d, compradores: d.compradores.filter((c) => c.id !== id) }));
   }, []);
 
   const empezarVacio = useCallback(() => {
+    olvidarDeshacer();
     setData(crearDatosVacios());
     setPrimeraVez(false);
     setAhora(Date.now());
@@ -256,12 +310,14 @@ export function WhisStoreProvider({ children }: { children: ReactNode }) {
 
   const cargarDemo = useCallback(() => {
     const t = Date.now();
+    olvidarDeshacer();
     setData(crearDatosSemilla(t));
     setPrimeraVez(false);
     setAhora(t);
   }, []);
 
   const reemplazarDatos = useCallback((nuevos: AppData) => {
+    olvidarDeshacer();
     setData(nuevos);
     setPrimeraVez(false);
     setAhora(Date.now());
@@ -270,6 +326,57 @@ export function WhisStoreProvider({ children }: { children: ReactNode }) {
   const descartarRecuperacion = useCallback(() => {
     borrarRecuperacion();
     setRecuperacion(null);
+  }, []);
+
+  const productoEnUso = useCallback(
+    (id: string) =>
+      data.lotes.some((l) => l.productoId === id) ||
+      data.bajas.some((b) => b.productoId === id) ||
+      data.liquidaciones.some((q) => q.productoId === id),
+    [data.lotes, data.bajas, data.liquidaciones],
+  );
+
+  const guardarProducto = useCallback((p: Producto) => {
+    const existe = productos.some((x) => x.id === p.id);
+    recordar(`Producto ${p.nombreCorto} ${existe ? 'actualizado' : 'agregado'}`);
+    setData((d) => {
+      // La primera vez que se edita, el catálogo base pasa a ser del negocio
+      const base = d.productos && d.productos.length > 0 ? d.productos : productos;
+      const lista = base.some((x) => x.id === p.id) ? base.map((x) => (x.id === p.id ? p : x)) : [...base, p];
+      return { ...d, productos: lista };
+    });
+  }, [productos]);
+
+  const eliminarProducto = useCallback(
+    (id: string): boolean => {
+      if (productoEnUso(id) || productos.length <= 1) return false;
+      const p = productos.find((x) => x.id === id);
+      recordar(`Producto ${p?.nombreCorto ?? ''} eliminado`);
+      setData((d) => ({ ...d, productos: productos.filter((x) => x.id !== id) }));
+      return true;
+    },
+    [productoEnUso, productos],
+  );
+
+  const editarLote = useCallback((loteId: string, cambios: CambiosLote) => {
+    const lote = dataRef.current.lotes.find((l) => l.id === loteId);
+    if (!lote) return;
+    recordar(`Lote ${cambios.codigoQR ?? lote.codigoQR} corregido`);
+    setData((d) => ({
+      ...d,
+      lotes: actualizarLote(d.lotes, loteId, (l) => {
+        const sinMovimientos = l.pesoKg === l.pesoInicialKg;
+        const pesoKg = cambios.pesoKg !== undefined && cambios.pesoKg > 0 ? +cambios.pesoKg.toFixed(2) : l.pesoKg;
+        return {
+          ...l,
+          ...cambios,
+          pesoKg,
+          // Si aún no salió nada del lote, corregir el peso corrige también el de ingreso
+          pesoInicialKg: sinMovimientos ? pesoKg : Math.max(l.pesoInicialKg, pesoKg),
+        };
+      }),
+    }));
+    setAhora(Date.now());
   }, []);
 
   const siguienteCodigo = useCallback((): string => {
@@ -298,6 +405,14 @@ export function WhisStoreProvider({ children }: { children: ReactNode }) {
     agregarComprador,
     eliminarComprador,
     siguienteCodigo,
+    productos,
+    guardarProducto,
+    eliminarProducto,
+    productoEnUso,
+    editarLote,
+    deshacer,
+    deshacerUltimo,
+    olvidarDeshacer,
   };
 
   return <StoreCtx.Provider value={value}>{children}</StoreCtx.Provider>;

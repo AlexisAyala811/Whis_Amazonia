@@ -6,9 +6,13 @@ import { BatchesView } from './components/BatchesView';
 import { ColdChainView } from './components/ColdChainView';
 import { DashboardView } from './components/DashboardView';
 import { DispatchSheet } from './components/DispatchSheet';
+import { EditLoteSheet } from './components/EditLoteSheet';
 import { LiquidationView } from './components/LiquidationView';
+import { LoteAccionesSheet } from './components/LoteAccionesSheet';
+import { ProductosSheet } from './components/ProductosSheet';
 import { SettingsSheet } from './components/SettingsSheet';
 import { ThermalChartModal } from './components/ThermalChartModal';
+import { UndoBar } from './components/UndoBar';
 import { WasteAuditModal } from './components/WasteAuditModal';
 import { useToast } from './components/ui/Toast';
 import { useOnline, useTheme } from './hooks/useDevice';
@@ -32,6 +36,9 @@ export default function App() {
   const [vista, setVista] = useState<Vista>('inicio');
   const [nuevoLote, setNuevoLote] = useState(false);
   const [ajustes, setAjustes] = useState(false);
+  const [productos, setProductos] = useState(false);
+  const [accionesId, setAccionesId] = useState<string | null>(null);
+  const [editarId, setEditarId] = useState<string | null>(null);
   const [despachoId, setDespachoId] = useState<string | null>(null);
   const [curvaId, setCurvaId] = useState<string | null>(null);
   const [bajaId, setBajaId] = useState<string | null>(null);
@@ -64,6 +71,12 @@ export default function App() {
     irA('liquidar');
   };
   const limpiarPre = useCallback(() => setPreLiquidar(null), []);
+  const abrirLote = (l: LoteFefo) => setAccionesId(l.id);
+  /** Cierra la hoja de acciones y abre la siguiente */
+  const desdeAcciones = (fn: (l: LoteFefo) => void) => (l: LoteFefo) => {
+    setAccionesId(null);
+    fn(l);
+  };
 
   return (
     <div className="mx-auto min-h-dvh max-w-md bg-canvas sm:border-x sm:border-line">
@@ -73,7 +86,7 @@ export default function App() {
           <img src={`${import.meta.env.BASE_URL}logo-whis.png`} alt="Whis" className="h-7 w-auto dark:invert" />
           <span
             title={online ? 'En línea · datos guardados localmente' : 'Modo Offline Activo — Datos guardados localmente'}
-            className={`pill ml-1 ${online ? 'bg-ok/15 text-ok' : 'bg-warn/15 text-warn'}`}
+            className={`pill ml-1 whitespace-nowrap ${online ? 'bg-ok/15 text-ok' : 'bg-warn/15 text-warn'}`}
           >
             {online ? <Wifi size={12} /> : <WifiOff size={12} />}
             {online ? 'En línea' : 'Offline'}
@@ -106,17 +119,14 @@ export default function App() {
         {vista === 'inicio' && (
           <DashboardView
             online={online}
+            onAbrir={abrirLote}
             onDespachar={(l) => setDespachoId(l.id)}
             onLiquidar={liquidarLote}
             onVerLotes={() => irA('lotes')}
           />
         )}
         {vista === 'lotes' && (
-          <BatchesView
-            onDespachar={(l) => setDespachoId(l.id)}
-            onCurva={(l) => setCurvaId(l.id)}
-            onBaja={(l) => setBajaId(l.id)}
-          />
+          <BatchesView onAbrir={abrirLote} onDespachar={(l) => setDespachoId(l.id)} onLiquidar={liquidarLote} />
         )}
         {vista === 'frio' && <ColdChainView />}
         {vista === 'liquidar' && <LiquidationView preseleccion={preLiquidar} limpiarPreseleccion={limpiarPre} />}
@@ -151,10 +161,31 @@ export default function App() {
 
       <Bienvenida />
       <AddBatchSheet open={nuevoLote} onClose={() => setNuevoLote(false)} />
-      <SettingsSheet open={ajustes} onClose={() => setAjustes(false)} tema={tema} toggleTema={toggleTema} />
+      <SettingsSheet
+        open={ajustes}
+        onClose={() => setAjustes(false)}
+        tema={tema}
+        toggleTema={toggleTema}
+        onProductos={() => {
+          setAjustes(false);
+          setProductos(true);
+        }}
+      />
+      <ProductosSheet open={productos} onClose={() => setProductos(false)} />
+      <LoteAccionesSheet
+        lote={buscar(accionesId)}
+        onClose={() => setAccionesId(null)}
+        onDespachar={desdeAcciones((l) => setDespachoId(l.id))}
+        onLiquidar={desdeAcciones(liquidarLote)}
+        onCurva={desdeAcciones((l) => setCurvaId(l.id))}
+        onEditar={desdeAcciones((l) => setEditarId(l.id))}
+        onBaja={desdeAcciones((l) => setBajaId(l.id))}
+      />
+      <EditLoteSheet lote={buscar(editarId)} onClose={() => setEditarId(null)} />
       <DispatchSheet lote={buscar(despachoId)} onClose={() => setDespachoId(null)} />
       <ThermalChartModal lote={buscar(curvaId)} onClose={() => setCurvaId(null)} />
       <WasteAuditModal lote={buscar(bajaId)} onClose={() => setBajaId(null)} />
+      <UndoBar />
     </div>
   );
 }
