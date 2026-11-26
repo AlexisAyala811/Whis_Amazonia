@@ -66,7 +66,7 @@ export function BatchesView({ onDespachar, onCurva, onBaja }: Props) {
             <button
               key={f.id}
               onClick={() => setFiltro(f.id)}
-              className={`inline-flex min-h-[40px] shrink-0 items-center gap-2 rounded-full border px-4 text-sm font-semibold transition-all duration-200 ease-out active:scale-95 ${
+              className={`inline-flex min-h-[44px] shrink-0 items-center gap-2 rounded-full border px-4 text-sm font-semibold transition-all duration-200 ease-out active:scale-95 ${
                 act ? 'border-transparent bg-ink text-canvas' : 'border-line bg-surface text-muted'
               }`}
             >
@@ -86,7 +86,7 @@ export function BatchesView({ onDespachar, onCurva, onBaja }: Props) {
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder="Buscar"
-            className="field min-h-[40px] pl-9 text-sm"
+            className="field min-h-[44px] pl-9 text-sm"
             aria-label="Buscar lote"
           />
         </div>

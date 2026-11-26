@@ -280,7 +280,7 @@ function OfertaSheet({ lote, onClose }: { lote: LoteFefo | null; onClose: () => 
           <div className="mb-2 flex items-center justify-between">
             <span className="label mb-0">Agenda B2B</span>
             <button
-              className="inline-flex min-h-[36px] items-center gap-1 text-sm font-semibold text-brand"
+              className="inline-flex min-h-[44px] items-center gap-1 text-sm font-semibold text-brand"
               onClick={() => setNuevo(nuevo ? null : { nombre: '', rubro: '', telefono: '' })}
             >
               {nuevo ? 'Cancelar' : (<><UserPlus size={16} /> Nuevo</>)}
@@ -365,11 +365,11 @@ function OfertaSheet({ lote, onClose }: { lote: LoteFefo | null; onClose: () => 
             <span className="label mb-0">Mensaje generado</span>
             <div className="flex gap-3">
               {editado && (
-                <button className="text-xs font-semibold text-muted" onClick={() => setEditado(false)}>
+                <button className="min-h-[44px] px-1 text-xs font-semibold text-muted" onClick={() => setEditado(false)}>
                   Restaurar
                 </button>
               )}
-              <button className="inline-flex items-center gap-1 text-xs font-semibold text-brand" onClick={copiar}>
+              <button className="inline-flex min-h-[44px] items-center gap-1 px-1 text-xs font-semibold text-brand" onClick={copiar}>
                 <Copy size={14} /> Copiar
               </button>
             </div>

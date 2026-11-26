@@ -311,7 +311,7 @@ export function AddBatchSheet({ open, onClose }: Props) {
                 key={p}
                 type="button"
                 onClick={() => setPeso(String(p))}
-                className={`min-h-[40px] shrink-0 rounded-full border px-3.5 text-sm font-semibold transition-all duration-200 active:scale-95 ${
+                className={`min-h-[44px] shrink-0 rounded-full border px-3.5 text-sm font-semibold transition-all duration-200 active:scale-95 ${
                   Number(peso) === p ? 'border-transparent bg-ink text-canvas' : 'border-line bg-surface2/60 text-muted'
                 }`}
               >
