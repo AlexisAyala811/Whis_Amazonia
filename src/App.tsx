@@ -51,7 +51,7 @@ export default function App() {
       {/* Cabecera */}
       <header className="glass sticky top-0 z-30 border-b border-line pt-[env(safe-area-inset-top)]">
         <div className="flex h-14 items-center gap-2 px-4">
-          <img src="/logo-whis.png" alt="Whis" className="h-7 w-auto dark:invert" />
+          <img src={`${import.meta.env.BASE_URL}logo-whis.png`} alt="Whis" className="h-7 w-auto dark:invert" />
           <span
             title={online ? 'En línea · datos guardados localmente' : 'Modo Offline Activo — Datos guardados localmente'}
             className={`pill ml-1 ${online ? 'bg-ok/15 text-ok' : 'bg-warn/15 text-warn'}`}
