@@ -109,7 +109,7 @@ export function ThermalChartModal({ lote, onClose }: Props) {
             </span>
             <div className="min-w-0 flex-1">
               <p className="text-sm font-semibold">
-                {listo ? `Sensor BLE TS-${lote.codigoQR.replace(/\D/g, '')} sincronizado` : 'Descargando datos del sensor BLE…'}
+                {listo ? 'Curva estimada · sin sensor conectado' : 'Calculando curva estimada…'}
               </p>
               <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-surface">
                 <div className="h-full rounded-full bg-brand transition-all duration-100" style={{ width: `${progreso}%` }} />

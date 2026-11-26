@@ -22,6 +22,10 @@ const descargar = (contenido: string, nombre: string, tipo: string) => {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 };
 
+/** Descarga texto como archivo (JSON por defecto). */
+export const descargarTexto = (contenido: string, nombre: string, tipo = 'application/json') =>
+  descargar(contenido, nombre, tipo);
+
 const fecha = () => new Date().toISOString().slice(0, 10);
 const dec = (n: number) => n.toFixed(2).replace('.', ',');
 

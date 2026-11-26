@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { CONDICIONES, getProducto } from '../data/catalog';
-import { DATA_VERSION, crearDatosSemilla } from '../data/seedData';
+import { crearDatosSemilla, crearDatosVacios } from '../data/seedData';
 import type {
   AppData,
   BajaMerma,
@@ -14,30 +14,13 @@ import type {
   Semaforo,
 } from '../types';
 import { calcularFefo, conApagon, ordenarFefo, uid, type LoteFefo } from '../utils/fefoEngine';
-
-const STORAGE_KEY = 'whis-amazonia:data';
-
-const leer = (): AppData => {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) {
-      const data = JSON.parse(raw) as AppData;
-      if (data.version === DATA_VERSION && Array.isArray(data.lotes)) return data;
-    }
-  } catch {
-    /* almacenamiento no disponible o corrupto: se vuelve a sembrar */
-  }
-  return crearDatosSemilla();
-};
-
-const guardar = (data: AppData): boolean => {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-    return true;
-  } catch {
-    return false;
-  }
-};
+import {
+  borrarRecuperacion,
+  cargar,
+  guardar,
+  pedirAlmacenamientoPersistente,
+  type Carga,
+} from '../utils/persistencia';
 
 export interface NuevoLoteInput {
   codigoQR: string;
@@ -62,6 +45,14 @@ interface Store {
   ahora: number;
   activos: LoteFefo[];
   guardadoOk: boolean;
+  /** true solo la primera vez que se abre la app en este equipo */
+  primeraVez: boolean;
+  /** Datos previos que no se pudieron abrir (se conservan aparte, nunca se sobrescriben) */
+  recuperacion: { motivo: string; copiaGuardada: boolean } | null;
+  descartarRecuperacion: () => void;
+  empezarVacio: () => void;
+  cargarDemo: () => void;
+  reemplazarDatos: (data: AppData) => void;
   agregarLote: (input: NuevoLoteInput) => Lote;
   despachar: (loteId: string, pesoKg: number) => void;
   registrarApagon: (camaraIds: CamaraId[], horas: number, nota?: string) => ResultadoApagon;
@@ -69,7 +60,6 @@ interface Store {
   liquidar: (loteId: string, descuentoPct: number, compradorId: string) => Liquidacion | null;
   agregarComprador: (c: Omit<CompradorB2B, 'id'>) => CompradorB2B;
   eliminarComprador: (id: string) => void;
-  reiniciarDemo: () => void;
   siguienteCodigo: () => string;
 }
 
@@ -78,14 +68,26 @@ const StoreCtx = createContext<Store | null>(null);
 const rango: Record<Semaforo, number> = { verde: 0, amarillo: 1, rojo: 2 };
 
 export function WhisStoreProvider({ children }: { children: ReactNode }) {
-  const [data, setData] = useState<AppData>(leer);
+  const [carga] = useState<Carga>(cargar);
+  const [data, setData] = useState<AppData>(carga.data);
   const [ahora, setAhora] = useState(() => Date.now());
   const [guardadoOk, setGuardadoOk] = useState(true);
+  const [primeraVez, setPrimeraVez] = useState(carga.tipo === 'primeraVez');
+  const [recuperacion, setRecuperacion] = useState(
+    carga.tipo === 'recuperacion' ? { motivo: carga.motivo, copiaGuardada: carga.copiaGuardada } : null,
+  );
 
-  // Persistencia local automática
+  // Persistencia local automática. Si hay datos sin poder abrir y no se logró
+  // guardarlos aparte, no se escribe nada hasta que el usuario decida.
+  const pausado = recuperacion !== null && !recuperacion.copiaGuardada;
   useEffect(() => {
+    if (primeraVez || pausado) return;
     setGuardadoOk(guardar(data));
-  }, [data]);
+  }, [data, primeraVez, pausado]);
+
+  useEffect(() => {
+    void pedirAlmacenamientoPersistente();
+  }, []);
 
   // El motor FEFO se recalcula cada 30 s
   useEffect(() => {
@@ -246,10 +248,28 @@ export function WhisStoreProvider({ children }: { children: ReactNode }) {
     setData((d) => ({ ...d, compradores: d.compradores.filter((c) => c.id !== id) }));
   }, []);
 
-  const reiniciarDemo = useCallback(() => {
+  const empezarVacio = useCallback(() => {
+    setData(crearDatosVacios());
+    setPrimeraVez(false);
+    setAhora(Date.now());
+  }, []);
+
+  const cargarDemo = useCallback(() => {
     const t = Date.now();
     setData(crearDatosSemilla(t));
+    setPrimeraVez(false);
     setAhora(t);
+  }, []);
+
+  const reemplazarDatos = useCallback((nuevos: AppData) => {
+    setData(nuevos);
+    setPrimeraVez(false);
+    setAhora(Date.now());
+  }, []);
+
+  const descartarRecuperacion = useCallback(() => {
+    borrarRecuperacion();
+    setRecuperacion(null);
   }, []);
 
   const siguienteCodigo = useCallback((): string => {
@@ -264,6 +284,12 @@ export function WhisStoreProvider({ children }: { children: ReactNode }) {
     ahora,
     activos,
     guardadoOk,
+    primeraVez,
+    recuperacion,
+    descartarRecuperacion,
+    empezarVacio,
+    cargarDemo,
+    reemplazarDatos,
     agregarLote,
     despachar,
     registrarApagon,
@@ -271,7 +297,6 @@ export function WhisStoreProvider({ children }: { children: ReactNode }) {
     liquidar,
     agregarComprador,
     eliminarComprador,
-    reiniciarDemo,
     siguienteCodigo,
   };
 

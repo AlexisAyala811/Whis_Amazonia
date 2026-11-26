@@ -1,8 +1,21 @@
-import { useState } from 'react';
-import { Database, FileJson, FileSpreadsheet, Moon, RotateCcw, Sun } from 'lucide-react';
+import { useRef, useState, type ReactNode } from 'react';
+import {
+  AlertTriangle,
+  Database,
+  Download,
+  FileJson,
+  FileSpreadsheet,
+  FileUp,
+  FlaskConical,
+  Moon,
+  Sun,
+  Trash2,
+} from 'lucide-react';
 import { useWhisStore } from '../hooks/useWhisStore';
 import type { Tema } from '../hooks/useDevice';
-import { exportarCSV, exportarJSON } from '../utils/exportar';
+import type { AppData } from '../types';
+import { descargarTexto, exportarCSV, exportarJSON } from '../utils/exportar';
+import { diasDesdeRespaldo, leerRecuperacion, marcarRespaldo, validarYMigrar } from '../utils/persistencia';
 import { BottomSheet } from './ui/BottomSheet';
 import { useToast } from './ui/Toast';
 
@@ -13,86 +26,214 @@ interface Props {
   toggleTema: () => void;
 }
 
-export function SettingsSheet({ open, onClose, tema, toggleTema }: Props) {
-  const { data, reiniciarDemo, guardadoOk } = useWhisStore();
-  const toast = useToast();
-  const [confirmando, setConfirmando] = useState(false);
+type Confirmacion =
+  | { tipo: 'importar'; data: AppData; nombre: string }
+  | { tipo: 'vaciar' }
+  | { tipo: 'demo' }
+  | null;
 
-  const fila = 'flex min-h-[56px] w-full items-center gap-3 rounded-2xl px-3 text-left transition-all duration-200 hover:bg-surface2 active:scale-[0.99]';
+const resumen = (d: AppData) =>
+  `${d.lotes.length} lotes · ${d.compradores.length} compradores · ${d.liquidaciones.length} liquidaciones · ${d.bajas.length} bajas`;
+
+const textoRespaldo = (dias: number | null) => {
+  if (dias === null) return 'Aún no exportas un respaldo';
+  if (dias <= 0) return 'Último respaldo: hoy';
+  if (dias === 1) return 'Último respaldo: ayer';
+  return `Último respaldo: hace ${dias} días`;
+};
+
+export function SettingsSheet({ open, onClose, tema, toggleTema }: Props) {
+  const { data, guardadoOk, empezarVacio, cargarDemo, reemplazarDatos, recuperacion, descartarRecuperacion } =
+    useWhisStore();
+  const toast = useToast();
+  const [confirmacion, setConfirmacion] = useState<Confirmacion>(null);
+  const [dias, setDias] = useState(() => diasDesdeRespaldo());
+  const archivoRef = useRef<HTMLInputElement>(null);
+
+  const fila =
+    'flex min-h-[56px] w-full items-center gap-3 rounded-2xl px-3 text-left transition-all duration-200 hover:bg-surface2 active:scale-[0.99]';
   const icono = 'grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-surface2 text-muted';
+  const respaldoViejo = data.modo === 'real' && (dias === null || dias >= 7);
+
+  const cerrar = () => {
+    setConfirmacion(null);
+    onClose();
+  };
+
+  const leerArchivo = async (file: File) => {
+    try {
+      const r = validarYMigrar(JSON.parse(await file.text()));
+      if (!r.ok) return toast('error', 'No se pudo importar', r.motivo);
+      setConfirmacion({ tipo: 'importar', data: r.data, nombre: file.name });
+    } catch {
+      toast('error', 'No se pudo importar', 'El archivo no es un respaldo JSON válido.');
+    }
+  };
+
+  const confirmar = () => {
+    if (!confirmacion) return;
+    if (confirmacion.tipo === 'importar') {
+      reemplazarDatos(confirmacion.data);
+      marcarRespaldo();
+      setDias(0);
+      toast('exito', 'Respaldo restaurado', resumen(confirmacion.data));
+    } else if (confirmacion.tipo === 'vaciar') {
+      empezarVacio();
+      toast('exito', 'Listo para tus datos reales', 'Se borraron lotes, compradores e historial.');
+    } else {
+      cargarDemo();
+      toast('info', 'Datos de demo cargados', 'Los compradores de ejemplo tienen teléfonos ficticios.');
+    }
+    cerrar();
+  };
 
   return (
-    <BottomSheet open={open} onClose={() => { setConfirmando(false); onClose(); }} title="Ajustes" subtitle="Whis · v0.1 MVP">
+    <BottomSheet open={open} onClose={cerrar} title="Ajustes" subtitle="Whis · v0.2">
       <div className="space-y-1">
-        <button className={fila} onClick={toggleTema}>
-          <span className={icono}>{tema === 'dark' ? <Sun size={18} /> : <Moon size={18} />}</span>
-          <span className="flex-1">
-            <span className="block text-sm font-semibold">Tema {tema === 'dark' ? 'claro (Warm Cream)' : 'oscuro (Obsidian)'}</span>
-            <span className="block text-xs text-muted">Cambiar apariencia</span>
-          </span>
-        </button>
-        <button
-          className={fila}
+        {recuperacion && (
+          <div className="mb-2 rounded-2xl bg-warn/10 p-3 text-sm">
+            <p className="flex items-center gap-2 font-semibold text-warn">
+              <AlertTriangle size={16} /> Datos anteriores sin abrir
+            </p>
+            <p className="mt-1 text-muted">
+              {recuperacion.motivo}{' '}
+              {recuperacion.copiaGuardada
+                ? 'Se guardó una copia aparte; descárgala antes de descartarla.'
+                : 'No se guardan cambios hasta que descargues la copia.'}
+            </p>
+            <div className="mt-2 grid grid-cols-2 gap-2">
+              <button
+                className="btn-ghost"
+                onClick={() => {
+                  const raw = leerRecuperacion();
+                  if (raw) descargarTexto(raw, `whis-datos-recuperados-${new Date().toISOString().slice(0, 10)}.json`);
+                  else toast('error', 'No se encontró la copia');
+                }}
+              >
+                <Download size={16} /> Descargar
+              </button>
+              <button className="btn w-full" onClick={descartarRecuperacion}>
+                Descartar
+              </button>
+            </div>
+          </div>
+        )}
+
+        <Fila icono={<span className={icono}>{tema === 'dark' ? <Sun size={18} /> : <Moon size={18} />}</span>} clase={fila} onClick={toggleTema}
+          titulo={`Tema ${tema === 'dark' ? 'claro (Warm Cream)' : 'oscuro (Obsidian)'}`} detalle="Cambiar apariencia" />
+
+        <Fila
+          clase={fila}
+          icono={<span className={icono}><FileSpreadsheet size={18} /></span>}
+          titulo="Exportar Reporte CSV"
+          detalle="Lotes, liquidaciones, bajas y apagones"
           onClick={() => {
             exportarCSV(data);
             toast('exito', 'Reporte CSV exportado', 'Ábrelo con Excel o Google Sheets.');
           }}
-        >
-          <span className={icono}><FileSpreadsheet size={18} /></span>
-          <span className="flex-1">
-            <span className="block text-sm font-semibold">Exportar Reporte CSV</span>
-            <span className="block text-xs text-muted">Lotes, liquidaciones, bajas y apagones</span>
-          </span>
-        </button>
-        <button
-          className={fila}
+        />
+        <Fila
+          clase={fila}
+          icono={<span className={`${icono} ${respaldoViejo ? 'bg-warn/15 text-warn' : ''}`}><FileJson size={18} /></span>}
+          titulo="Exportar respaldo JSON"
+          detalle={textoRespaldo(dias)}
+          detalleClase={respaldoViejo ? 'text-warn' : undefined}
           onClick={() => {
             exportarJSON(data);
-            toast('exito', 'Respaldo JSON exportado');
+            marcarRespaldo();
+            setDias(0);
+            toast('exito', 'Respaldo JSON exportado', 'Guárdalo fuera del celular (Drive, correo o PC).');
           }}
-        >
-          <span className={icono}><FileJson size={18} /></span>
-          <span className="flex-1">
-            <span className="block text-sm font-semibold">Exportar respaldo JSON</span>
-            <span className="block text-xs text-muted">Copia completa de los datos locales</span>
-          </span>
-        </button>
+        />
+        <Fila
+          clase={fila}
+          icono={<span className={icono}><FileUp size={18} /></span>}
+          titulo="Restaurar respaldo JSON"
+          detalle="Reemplaza los datos de este equipo"
+          onClick={() => archivoRef.current?.click()}
+        />
+        <input
+          ref={archivoRef}
+          type="file"
+          accept="application/json,.json"
+          className="hidden"
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+            e.target.value = '';
+            if (f) void leerArchivo(f);
+          }}
+        />
+
         <div className={`${fila} pointer-events-none`}>
-          <span className={icono}><Database size={18} /></span>
+          <span className={icono}>{data.modo === 'demo' ? <FlaskConical size={18} /> : <Database size={18} />}</span>
           <span className="flex-1">
-            <span className="block text-sm font-semibold">Almacenamiento local</span>
+            <span className="block text-sm font-semibold">
+              {data.modo === 'demo' ? 'Modo demo (datos de ejemplo)' : 'Datos reales en este equipo'}
+            </span>
             <span className={`block text-xs ${guardadoOk ? 'text-muted' : 'text-danger'}`}>
-              {guardadoOk ? `${data.lotes.length} lotes · ${data.bajas.length} bajas · guardado en este equipo` : 'Almacenamiento lleno: exporta y reinicia'}
+              {guardadoOk ? resumen(data) : 'Almacenamiento lleno: exporta un respaldo y libera espacio'}
             </span>
           </span>
         </div>
 
         <div className="pt-3">
-          {confirmando ? (
+          {confirmacion ? (
             <div className="animate-fade-in rounded-2xl bg-danger/10 p-3">
-              <p className="mb-2 text-sm text-danger">Se borrarán todos los datos y se cargará la demo inicial. ¿Continuar?</p>
+              <p className="mb-2 text-sm text-danger">
+                {confirmacion.tipo === 'importar' &&
+                  `Se reemplazarán los datos actuales (${resumen(data)}) por los de "${confirmacion.nombre}" (${resumen(confirmacion.data)}).`}
+                {confirmacion.tipo === 'vaciar' &&
+                  'Se borrarán todos los lotes, compradores, liquidaciones, bajas e historial de este equipo.'}
+                {confirmacion.tipo === 'demo' && 'Se borrarán los datos actuales y se cargarán datos de ejemplo.'}{' '}
+                {data.modo === 'real' && data.lotes.length > 0 && 'Exporta un respaldo antes si no lo hiciste.'} ¿Continuar?
+              </p>
               <div className="grid grid-cols-2 gap-2">
-                <button className="btn-ghost" onClick={() => setConfirmando(false)}>Cancelar</button>
-                <button
-                  className="btn-danger"
-                  onClick={() => {
-                    reiniciarDemo();
-                    setConfirmando(false);
-                    onClose();
-                    toast('exito', 'Datos de demo reiniciados');
-                  }}
-                >
-                  Sí, reiniciar
+                <button className="btn-ghost" onClick={() => setConfirmacion(null)}>
+                  Cancelar
+                </button>
+                <button className="btn-danger" onClick={confirmar}>
+                  Sí, continuar
                 </button>
               </div>
             </div>
           ) : (
-            <button className="btn w-full text-danger" onClick={() => setConfirmando(true)}>
-              <RotateCcw size={16} /> Reiniciar datos de demo
-            </button>
+            <div className="grid grid-cols-2 gap-2">
+              <button className="btn w-full text-danger" onClick={() => setConfirmacion({ tipo: 'vaciar' })}>
+                <Trash2 size={16} /> Borrar todo
+              </button>
+              <button className="btn w-full" onClick={() => setConfirmacion({ tipo: 'demo' })}>
+                <FlaskConical size={16} /> Cargar demo
+              </button>
+            </div>
           )}
         </div>
       </div>
     </BottomSheet>
+  );
+}
+
+function Fila({
+  clase,
+  icono,
+  titulo,
+  detalle,
+  detalleClase,
+  onClick,
+}: {
+  clase: string;
+  icono: ReactNode;
+  titulo: string;
+  detalle: string;
+  detalleClase?: string;
+  onClick: () => void;
+}) {
+  return (
+    <button className={clase} onClick={onClick}>
+      {icono}
+      <span className="flex-1">
+        <span className="block text-sm font-semibold">{titulo}</span>
+        <span className={`block text-xs ${detalleClase ?? 'text-muted'}`}>{detalle}</span>
+      </span>
+    </button>
   );
 }

@@ -44,15 +44,18 @@ La instalación como app, la cámara (QR) y el micrófono solo funcionan con **H
 
 - **Inicio:** dinero en riesgo, caja recuperada, % de merma evitada, lista "Qué sacar primero hoy" y gráfico semanal.
 - **Botón +:** registro de lote en segundos por QR (o "Simular J-104"), por voz ("Ingresan 80 kilos de pollo a cámara 1 con 2 horas sin frío") o tocando.
-- **Lotes:** filtros por semáforo y cámara, despacho parcial/total, curva térmica (sensor BLE simulado) y baja por merma con **foto obligatoria**.
+- **Lotes:** filtros por semáforo y cámara, despacho parcial/total, curva térmica estimada y baja por merma con **foto obligatoria**.
 - **Frío/Alertas:** registro de cortes de luz que recalcula al instante todos los lotes de la cámara y deja bitácora.
 - **Liquidar:** descuento 20–50 %, agenda de compradores, mensaje automático y envío por WhatsApp; "Marcar como Liquidado" suma a Caja Recuperada.
-- **Ajustes (ícono de la esquina):** tema claro/oscuro, exportar CSV (abre en Excel) y JSON, reiniciar datos de demo.
+- **Ajustes (ícono de la esquina):** tema claro/oscuro, exportar CSV (abre en Excel), exportar y restaurar respaldo JSON, borrar todo o cargar la demo.
 
 ## Importante antes de usarla en serio
 
-- Los **teléfonos de los compradores de ejemplo son ficticios** (`+51 900 000 00X`). Elimínalos y agrega los reales desde **Liquidar → Nuevo**.
-- Los datos viven en el navegador del equipo. Exporta el respaldo JSON con frecuencia; si se borran los datos del navegador, se pierden.
+- La primera vez que abres la app en un equipo eliges **"Usar con mis datos"** (empieza vacía, sin lotes ni compradores de ejemplo) o **"Ver la demo"**. Mientras ves la demo, la cabecera muestra la etiqueta **Demo**. Puedes cambiar luego en **Ajustes → Borrar todo / Cargar demo**.
+- Agrega tus compradores reales desde **Liquidar → Preparar oferta → Nuevo**. Los de la demo tienen teléfonos ficticios (`+51 900 000 00X`).
+- Los datos viven solo en el navegador de este equipo. Exporta el respaldo JSON (**Ajustes → Exportar respaldo JSON**) al menos una vez por semana y guárdalo fuera del celular; la app te lo recuerda si pasan 7 días. Para recuperarlo en otro equipo usa **Ajustes → Restaurar respaldo JSON**.
+- Si alguna vez la app no puede abrir los datos guardados (archivo dañado o de otra versión), **no los borra**: guarda una copia aparte y te ofrece descargarla desde Ajustes.
+- El gráfico de temperatura de cada lote es una **curva estimada** a partir de la condición de llegada y los apagones registrados; todavía no se conecta a un sensor real.
 
 ## Motor FEFO térmico
 
@@ -74,6 +77,7 @@ src/
   utils/fefoEngine.ts      Motor FEFO y formateadores (S/, horas)
   utils/voiceParser.ts     Interpreta frases dictadas
   utils/exportar.ts        Exportación CSV / JSON
+  utils/persistencia.ts    Guardado local, validación y restauración de respaldos
   hooks/useWhisStore.tsx   Estado + guardado offline (localStorage)
   components/ui/           ModernSelect, BottomSheet, Toast, piezas comunes
   components/              DashboardView, BatchesView, ColdChainView, LiquidationView,

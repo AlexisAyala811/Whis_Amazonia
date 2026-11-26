@@ -95,6 +95,7 @@ export const crearDatosSemilla = (ahora: number = Date.now()): AppData => {
 
   return {
     version: DATA_VERSION,
+    modo: 'demo',
     lotes,
     eventos,
     compradores: COMPRADORES_SEMILLA,
@@ -104,3 +105,16 @@ export const crearDatosSemilla = (ahora: number = Date.now()): AppData => {
     historialSemanal: HISTORIAL,
   };
 };
+
+/** Punto de partida para usar la app con datos reales: sin lotes, compradores ni historial de ejemplo. */
+export const crearDatosVacios = (): AppData => ({
+  version: DATA_VERSION,
+  modo: 'real',
+  lotes: [],
+  eventos: [],
+  compradores: [],
+  bajas: [],
+  liquidaciones: [],
+  despachos: [],
+  historialSemanal: [],
+});
