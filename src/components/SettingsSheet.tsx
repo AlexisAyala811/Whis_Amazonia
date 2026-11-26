@@ -7,6 +7,7 @@ import {
   FileSpreadsheet,
   FileUp,
   FlaskConical,
+  DoorOpen,
   Moon,
   Package,
   Sun,
@@ -26,6 +27,7 @@ interface Props {
   tema: Tema;
   toggleTema: () => void;
   onProductos: () => void;
+  onEntrada: () => void;
 }
 
 type Confirmacion =
@@ -44,7 +46,7 @@ const textoRespaldo = (dias: number | null) => {
   return `Último respaldo: hace ${dias} días`;
 };
 
-export function SettingsSheet({ open, onClose, tema, toggleTema, onProductos }: Props) {
+export function SettingsSheet({ open, onClose, tema, toggleTema, onProductos, onEntrada }: Props) {
   const { data, productos, guardadoOk, empezarVacio, cargarDemo, reemplazarDatos, recuperacion, descartarRecuperacion } =
     useWhisStore();
   const toast = useToast();
@@ -127,6 +129,14 @@ export function SettingsSheet({ open, onClose, tema, toggleTema, onProductos }: 
           titulo="Mis productos"
           detalle={`${productos.length} productos · vida útil, frío ideal y costo`}
           onClick={onProductos}
+        />
+
+        <Fila
+          clase={fila}
+          icono={<span className={icono}><DoorOpen size={18} /></span>}
+          titulo="Pantalla de bienvenida"
+          detalle="Ver la demo o empezar con tus datos"
+          onClick={onEntrada}
         />
 
         <Fila icono={<span className={icono}>{tema === 'dark' ? <Sun size={18} /> : <Moon size={18} />}</span>} clase={fila} onClick={toggleTema}
