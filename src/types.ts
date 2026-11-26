@@ -54,6 +54,7 @@ export interface Lote {
   horasApagonEnCamara?: number;
   condicionLlegada: CondicionLlegada;
   estado: EstadoLote;
+  envase?: Envase;
 }
 
 export interface EventoTermico {
@@ -104,12 +105,28 @@ export interface Liquidacion {
   compradorId: string;
 }
 
+export type CanalVenta = 'mayorista' | 'minorista' | 'puesto';
+export type MedioPago = 'efectivo' | 'yape' | 'credito';
+
 export interface Despacho {
   id: string;
   loteId: string;
   fecha: string;
   pesoKg: number;
   total: number;
+  /** Precio cobrado por kg (si falta, el precio de venta del lote) */
+  precioKg?: number;
+  canal?: CanalVenta;
+  medioPago?: MedioPago;
+}
+
+export type TipoEnvase = 'jaba' | 'caja' | 'saco';
+
+/** Cómo llegó empacado el lote (para mostrar jabas/cajas además de kg) */
+export interface Envase {
+  tipo: TipoEnvase;
+  cantidad: number;
+  kgPorEnvase: number;
 }
 
 export interface ResumenSemanal {

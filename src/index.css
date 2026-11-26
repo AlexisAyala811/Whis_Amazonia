@@ -4,17 +4,17 @@
 
 /* ---------- Tokens de tema ---------- */
 :root {
-  /* Warm Cream (claro) */
-  --bg: 248 246 242;
+  /* Crema del mercado con verde selva (claro, por defecto) */
+  --bg: 244 241 232;
   --surface: 255 255 255;
-  --surface2: 241 237 230;
-  --line: 231 226 218;
-  --ink: 24 24 27;
-  --muted: 113 113 122;
-  --brand: 22 163 74;
-  --ok: 22 163 74;
-  --warn: 217 119 6;
-  --danger: 220 38 38;
+  --surface2: 238 234 222;
+  --line: 228 222 207;
+  --ink: 27 36 29;
+  --muted: 107 112 101;
+  --brand: 21 87 46;
+  --ok: 30 132 66;
+  --warn: 201 112 12;
+  --danger: 196 52 40;
   --glass: 255 255 255;
   --scroll: 0 0 0;
   color-scheme: light;
@@ -66,7 +66,23 @@
 
 @layer components {
   .card {
-    @apply rounded-2xl border border-line bg-surface;
+    @apply rounded-3xl border border-line bg-surface;
+    box-shadow: 0 1px 2px rgb(0 0 0 / 0.04), 0 6px 18px -12px rgb(0 0 0 / 0.12);
+  }
+  .dark .card {
+    box-shadow: none;
+  }
+  .chip {
+    @apply inline-flex min-h-[44px] shrink-0 items-center justify-center gap-1.5 rounded-full border border-line bg-surface px-4 text-sm font-semibold text-ink transition-all duration-200 ease-out active:scale-95;
+  }
+  .chip-on {
+    @apply border-transparent bg-brand text-white dark:text-[#0D0F12];
+  }
+  .seccion {
+    @apply mb-2.5 flex items-center justify-between gap-2;
+  }
+  .seccion-titulo {
+    @apply flex items-center gap-2 text-[15px] font-bold;
   }
   .glass {
     background: rgb(var(--glass) / 0.72);
