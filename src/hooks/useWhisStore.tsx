@@ -8,12 +8,14 @@ import type {
   CompradorB2B,
   CondicionLlegada,
   EventoTermico,
+  Festejo,
   Liquidacion,
   Lote,
   MotivoBaja,
   Producto,
   Semaforo,
 } from '../types';
+import { conMetaDiaria, registrarProgreso } from '../utils/logros';
 import { calcularFefo, conApagon, ordenarFefo, uid, type LoteFefo } from '../utils/fefoEngine';
 import {
   borrarRecuperacion,
@@ -82,6 +84,10 @@ interface Store {
   deshacerUltimo: () => string | null;
   olvidarDeshacer: () => void;
   fijarMetaDiaria: (soles: number) => void;
+  /** Celebraciones pendientes de mostrar (logros nuevos y meta del día) */
+  festejos: Festejo[];
+  cerrarFestejo: () => void;
+  cerrarFestejos: () => void;
 }
 
 const StoreCtx = createContext<Store | null>(null);
@@ -133,6 +139,13 @@ export function WhisStoreProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     void pedirAlmacenamientoPersistente();
+    // Claves de la primera versión de logros; ahora el registro vive en los datos
+    try {
+      localStorage.removeItem('whis-amazonia:logros-vistos');
+      localStorage.removeItem('whis-amazonia:meta-celebrada');
+    } catch {
+      /* sin acceso al almacenamiento */
+    }
   }, []);
 
   // El motor FEFO se recalcula cada 30 s
@@ -382,8 +395,24 @@ export function WhisStoreProvider({ children }: { children: ReactNode }) {
 
   const fijarMetaDiaria = useCallback((soles: number) => {
     if (!(soles > 0)) return;
-    setData((d) => ({ ...d, metas: { ...d.metas, rescateDiarioSoles: Math.round(soles) } }));
+    setData((d) => conMetaDiaria(d, soles, Date.now()));
   }, []);
+
+  // Tras cada cambio de datos se anotan los logros nuevos (con su fecha) y se
+  // encolan sus celebraciones. Va en los datos: viaja en el respaldo y Deshacer
+  // lo revierte junto con la acción que lo provocó.
+  const [festejos, setFestejos] = useState<Festejo[]>([]);
+  useEffect(() => {
+    if (primeraVez) return;
+    const r = registrarProgreso(data, Date.now());
+    if (r.data !== data) setData(r.data);
+    if (r.festejos.length > 0) {
+      setFestejos((f) => [...f, ...r.festejos]);
+      if ('vibrate' in navigator) navigator.vibrate?.([20, 60, 20, 60, 40]);
+    }
+  }, [data, primeraVez]);
+  const cerrarFestejo = useCallback(() => setFestejos((f) => f.slice(1)), []);
+  const cerrarFestejos = useCallback(() => setFestejos([]), []);
 
   const siguienteCodigo = useCallback((): string => {
     const usados = new Set(data.lotes.map((l) => l.codigoQR));
@@ -420,6 +449,9 @@ export function WhisStoreProvider({ children }: { children: ReactNode }) {
     deshacerUltimo,
     olvidarDeshacer,
     fijarMetaDiaria,
+    festejos,
+    cerrarFestejo,
+    cerrarFestejos,
   };
 
   return <StoreCtx.Provider value={value}>{children}</StoreCtx.Provider>;

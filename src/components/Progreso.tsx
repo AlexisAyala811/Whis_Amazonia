@@ -1,10 +1,10 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { Award, Banknote, ChevronRight, Clock, Flame, Lock, Scale, Target, Trophy, Zap } from 'lucide-react';
 import { useProgreso } from '../hooks/useProgreso';
 import { useWhisStore } from '../hooks/useWhisStore';
 import { soles, solesCorto } from '../utils/fefoEngine';
-import { METAS_SUGERIDAS, diaLocal, guardarVistos, leerVistos, type IconoLogro, type Logro } from '../utils/logros';
+import { METAS_SUGERIDAS, type IconoLogro, type Logro } from '../utils/logros';
 import { BottomSheet } from './ui/BottomSheet';
 
 const ICONOS: Record<IconoLogro, typeof Award> = {
@@ -80,7 +80,8 @@ export function MetaDelDiaCard({ onAbrir }: { onAbrir: () => void }) {
 
 export function ProgresoSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { progreso: p, logros, logrados } = useProgreso();
-  const { fijarMetaDiaria } = useWhisStore();
+  const { fijarMetaDiaria, data } = useWhisStore();
+  const registro = data.progreso;
   const [editando, setEditando] = useState(false);
   const [otra, setOtra] = useState('');
 
@@ -115,9 +116,9 @@ export function ProgresoSheet({ open, onClose }: { open: boolean; onClose: () =>
             {p.semana.map((d, i) => {
               const fecha = new Date(`${d.dia}T12:00:00`);
               const esHoy = i === 6;
-              const alto = Math.max(6, Math.min(100, (d.rescatado / p.meta) * 100));
+              const alto = Math.max(6, Math.min(100, (d.rescatado / d.meta) * 100));
               return (
-                <div key={d.dia} className="flex flex-col items-center gap-1" title={`${d.dia}: ${soles(d.rescatado)} rescatado`}>
+                <div key={d.dia} className="flex flex-col items-center gap-1" title={`${d.dia}: ${soles(d.rescatado)} de ${soles(d.meta)}`}>
                   <div className="relative flex h-16 w-full items-end overflow-hidden rounded-xl bg-surface2">
                     {d.rescatado > 0 && (
                       <div
@@ -204,7 +205,7 @@ export function ProgresoSheet({ open, onClose }: { open: boolean; onClose: () =>
           </div>
           <div className="space-y-2">
             {logros.map((l) => (
-              <LogroFila key={l.id} logro={l} />
+              <LogroFila key={l.id} logro={l} fecha={registro?.logros[l.id]} />
             ))}
           </div>
           <p className="mt-3 text-xs text-muted">
@@ -226,7 +227,10 @@ function Dato({ icono, valor, etiqueta }: { icono: ReactNode; valor: string; eti
   );
 }
 
-function LogroFila({ logro: l }: { logro: Logro }) {
+const fechaCorta = (iso: string) =>
+  new Date(iso).toLocaleDateString('es-PE', { day: 'numeric', month: 'short', year: 'numeric' });
+
+function LogroFila({ logro: l, fecha }: { logro: Logro; fecha?: string }) {
   const Icono = ICONOS[l.icono];
   const pct = (l.actual / l.objetivo) * 100;
   const avance = l.unidad === 'S/' ? `${soles(l.actual)} de ${soles(l.objetivo)}` : `${numero(l.actual)} de ${numero(l.objetivo)} ${l.unidad}`;
@@ -240,6 +244,7 @@ function LogroFila({ logro: l }: { logro: Logro }) {
       <div className="min-w-0 flex-1">
         <p className={`text-sm font-semibold ${l.logrado ? '' : 'text-ink/80'}`}>{l.titulo}</p>
         <p className="truncate text-xs text-muted">{l.logrado ? l.detalle : avance}</p>
+        {l.logrado && fecha && <p className="text-[11px] font-medium text-ok">Logrado el {fechaCorta(fecha)}</p>}
         {!l.logrado && (
           <div className="mt-1.5">
             <Barra pct={pct} alto="h-1.5" clase="bg-brand/70" />
@@ -252,86 +257,17 @@ function LogroFila({ logro: l }: { logro: Logro }) {
 
 /* ---------- Celebración ---------- */
 
-interface Festejo {
-  id: string;
-  titulo: string;
-  detalle: string;
-  icono: typeof Award;
-}
-
-const META_KEY = 'whis-amazonia:meta-celebrada';
-const leer = (k: string) => {
-  try {
-    return localStorage.getItem(k);
-  } catch {
-    return null;
-  }
-};
-const escribir = (k: string, v: string) => {
-  try {
-    localStorage.setItem(k, v);
-  } catch {
-    /* sin acceso al almacenamiento */
-  }
-};
-
-/**
- * Celebra una sola vez cada logro nuevo y la meta del día. Al abrir la app por
- * primera vez con esta versión, lo ya logrado se marca como visto sin festejo.
- */
+/** Muestra, una por una, las celebraciones que el store dejó en cola. */
 export function Celebracion({ onVerProgreso }: { onVerProgreso: () => void }) {
-  const { progreso, logros } = useProgreso();
-  const { primeraVez } = useWhisStore();
-  const [cola, setCola] = useState<Festejo[]>([]);
-  const iniciado = useRef(false);
-
-  useEffect(() => {
-    if (primeraVez) return;
-    const logrados = logros.filter((l) => l.logrado).map((l) => l.id);
-    const hoy = diaLocal(Date.now());
-    const vistos = leerVistos();
-
-    if (!iniciado.current) {
-      iniciado.current = true;
-      if (vistos === null) {
-        guardarVistos(logrados);
-        if (progreso.hoy.cumplida) escribir(META_KEY, hoy);
-        return;
-      }
-    }
-
-    const previos = new Set(vistos ?? []);
-    const nuevos = logros.filter((l) => l.logrado && !previos.has(l.id));
-    const festejos: Festejo[] = [];
-    if (progreso.hoy.cumplida && leer(META_KEY) !== hoy) {
-      escribir(META_KEY, hoy);
-      festejos.push({
-        id: `meta-${hoy}`,
-        titulo: 'Meta de hoy cumplida',
-        detalle: `Recuperaste ${soles(progreso.hoy.rescatado)} con remates. La meta era ${soles(progreso.meta)}.`,
-        icono: Target,
-      });
-    }
-    for (const l of nuevos) {
-      festejos.push({ id: l.id, titulo: l.titulo, detalle: l.detalle, icono: ICONOS[l.icono] });
-    }
-    // Lo que se deshizo deja de estar logrado y se puede volver a celebrar
-    guardarVistos(logrados);
-    if (festejos.length > 0) {
-      setCola((c) => [...c, ...festejos]);
-      if ('vibrate' in navigator) navigator.vibrate?.([20, 60, 20, 60, 40]);
-    }
-  }, [logros, progreso, primeraVez]);
-
-  const actual = cola[0];
+  const { festejos, cerrarFestejo, cerrarFestejos } = useWhisStore();
+  const actual = festejos[0];
   if (!actual) return null;
-  const Icono = actual.icono;
-  const cerrar = () => setCola((c) => c.slice(1));
-  const esMeta = actual.id.startsWith('meta-');
+  const Icono = ICONOS[actual.icono];
+  const esMeta = actual.tipo === 'meta';
 
   return createPortal(
     <div className="fixed inset-0 z-[80] flex items-center justify-center p-6">
-      <div className="absolute inset-0 animate-fade-in bg-black/55 backdrop-blur-[2px]" onClick={cerrar} />
+      <div className="absolute inset-0 animate-fade-in bg-black/55 backdrop-blur-[2px]" onClick={cerrarFestejo} />
       <div
         key={actual.id}
         role="alertdialog"
@@ -353,13 +289,13 @@ export function Celebracion({ onVerProgreso }: { onVerProgreso: () => void }) {
         </h2>
         <p className="relative mt-1.5 text-sm text-muted">{actual.detalle}</p>
         <div className="relative mt-5 grid gap-2">
-          <button className="btn-primary w-full" onClick={cerrar}>
-            {cola.length > 1 ? 'Siguiente' : 'Seguir'}
+          <button className="btn-primary w-full" onClick={cerrarFestejo}>
+            {festejos.length > 1 ? 'Siguiente' : 'Seguir'}
           </button>
           <button
             className="btn w-full text-muted"
             onClick={() => {
-              setCola([]);
+              cerrarFestejos();
               onVerProgreso();
             }}
           >

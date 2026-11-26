@@ -1,4 +1,4 @@
-import type { AppData } from '../types';
+import type { AppData, CambioMeta, Festejo, RegistroProgreso } from '../types';
 
 /**
  * Metas, rachas y logros. Todo se calcula a partir de los registros reales
@@ -31,10 +31,40 @@ const moverDias = (t: number, n: number): number => {
   return d.getTime();
 };
 
+/** Meta vigente (la de hoy) */
 export const metaDiaria = (data: AppData): number => {
   const m = data.metas?.rescateDiarioSoles;
   return typeof m === 'number' && m > 0 ? m : META_DIARIA_DEFECTO;
 };
+
+/**
+ * Meta que regía un día dado. Cambiar la meta hoy no reescribe el pasado:
+ * los días anteriores se juzgan con la meta que tenían. Antes del primer
+ * cambio registrado rige el primero (o la vigente si no hay historial).
+ */
+export function metaParaDia(data: AppData, dia: string): number {
+  const h = data.metas?.historial;
+  if (!h || h.length === 0) return metaDiaria(data);
+  let m = h[0].soles;
+  for (const c of h) {
+    if (c.desde <= dia) m = c.soles;
+    else break;
+  }
+  return m;
+}
+
+/** Devuelve los datos con la nueva meta vigente desde hoy, guardando el historial */
+export function conMetaDiaria(data: AppData, soles: number, ahora: number): AppData {
+  const valor = Math.round(soles);
+  if (!(valor > 0)) return data;
+  const hoy = diaLocal(ahora);
+  const previo: CambioMeta[] = data.metas?.historial ?? [
+    // Primer cambio: la meta anterior queda registrada como la que regía hasta ayer
+    { desde: '0000-01-01', soles: metaDiaria(data) },
+  ];
+  const historial = [...previo.filter((c) => c.desde < hoy), { desde: hoy, soles: valor }];
+  return { ...data, metas: { rescateDiarioSoles: valor, historial } };
+}
 
 export interface DiaResumen {
   dia: string;
@@ -52,7 +82,7 @@ export interface Progreso {
   racha: number;
   mejorRacha: number;
   /** Últimos 7 días, del más antiguo a hoy */
-  semana: (DiaResumen & { cumplida: boolean; activo: boolean })[];
+  semana: (DiaResumen & { meta: number; cumplida: boolean; activo: boolean })[];
   /** % del valor que se rescató vs. se perdió en los últimos 7 días (null si no hubo nada) */
   aprovechamiento: number | null;
   totalKg: number;
@@ -119,7 +149,8 @@ export function calcularProgreso(data: AppData, ahora: number): Progreso {
   const semana = Array.from({ length: 7 }, (_, i) => {
     const t = moverDias(hoy0, i - 6);
     const r = porDia.get(diaLocal(t)) ?? vacio(diaLocal(t));
-    return { ...r, cumplida: r.rescatado >= meta, activo: r.remates + r.bajas > 0 };
+    const metaDia = metaParaDia(data, r.dia);
+    return { ...r, meta: metaDia, cumplida: r.rescatado >= metaDia, activo: r.remates + r.bajas > 0 };
   });
   const rescSemana = semana.reduce((s, d) => s + d.rescatado, 0);
   const perdSemana = semana.reduce((s, d) => s + d.merma, 0);
@@ -128,7 +159,7 @@ export function calcularProgreso(data: AppData, ahora: number): Progreso {
 
   const hoyR = porDia.get(diaLocal(ahora)) ?? vacio(diaLocal(ahora));
   let diasMetaCumplida = 0;
-  for (const r of porDia.values()) if (r.rescatado >= meta) diasMetaCumplida++;
+  for (const r of porDia.values()) if (r.rescatado > 0 && r.rescatado >= metaParaDia(data, r.dia)) diasMetaCumplida++;
 
   return {
     meta,
@@ -145,7 +176,7 @@ export function calcularProgreso(data: AppData, ahora: number): Progreso {
   };
 }
 
-export type IconoLogro = 'remate' | 'kg' | 'caja' | 'racha' | 'reloj' | 'meta';
+export type IconoLogro = Festejo['icono'];
 
 export interface Logro {
   id: string;
@@ -177,26 +208,110 @@ export function calcularLogros(p: Progreso): Logro[] {
   });
 }
 
-/* ---------- Logros ya celebrados (por equipo, fuera de los datos) ---------- */
+/* ---------- Registro de logros y celebraciones ---------- */
 
-const VISTOS_KEY = 'whis-amazonia:logros-vistos';
+/**
+ * Compara lo logrado con lo ya registrado en los datos y devuelve los datos
+ * con los logros nuevos fechados, más lo que corresponde celebrar.
+ * - La primera vez (sin registro) anota lo ya logrado sin celebrar nada.
+ * - Si algo deja de estar logrado (p. ej. por Deshacer), se quita del registro
+ *   y se puede volver a celebrar.
+ * - Devuelve el mismo objeto `data` si no hay nada que cambiar.
+ */
+export function registrarProgreso(data: AppData, ahora: number): { data: AppData; festejos: Festejo[] } {
+  const p = calcularProgreso(data, ahora);
+  const logros = calcularLogros(p);
+  const hoy = diaLocal(ahora);
+  const fecha = new Date(ahora).toISOString();
+  const previo = data.progreso;
 
-/** null = nunca se guardó (primera apertura con esta versión) */
-export function leerVistos(): string[] | null {
-  try {
-    const raw = localStorage.getItem(VISTOS_KEY);
-    if (raw === null) return null;
-    const v = JSON.parse(raw);
-    return Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string') : [];
-  } catch {
-    return null;
+  if (!previo) {
+    const registro: RegistroProgreso = {
+      logros: Object.fromEntries(logros.filter((l) => l.logrado).map((l) => [l.id, fecha])),
+      ...(p.hoy.cumplida ? { metaCelebrada: hoy } : {}),
+    };
+    return { data: { ...data, progreso: registro }, festejos: [] };
   }
+
+  const festejos: Festejo[] = [];
+  const nuevoRegistro: Record<string, string> = {};
+  let cambio = false;
+  for (const l of logros) {
+    if (!l.logrado) {
+      if (previo.logros[l.id]) cambio = true;
+      continue;
+    }
+    if (previo.logros[l.id]) {
+      nuevoRegistro[l.id] = previo.logros[l.id];
+    } else {
+      nuevoRegistro[l.id] = fecha;
+      cambio = true;
+      festejos.push({ id: l.id, tipo: 'logro', titulo: l.titulo, detalle: l.detalle, icono: l.icono });
+    }
+  }
+  // Ids desconocidos (de una versión futura) se conservan tal cual
+  const conocidos = new Set(logros.map((l) => l.id));
+  for (const [id, f] of Object.entries(previo.logros)) if (!conocidos.has(id)) nuevoRegistro[id] = f;
+
+  let metaCelebrada = previo.metaCelebrada;
+  if (p.hoy.cumplida && previo.metaCelebrada !== hoy) {
+    metaCelebrada = hoy;
+    cambio = true;
+    festejos.unshift({
+      id: `meta-${hoy}`,
+      tipo: 'meta',
+      titulo: 'Meta de hoy cumplida',
+      detalle: `Recuperaste ${solesTexto(p.hoy.rescatado)} con remates. La meta era ${solesTexto(p.meta)}.`,
+      icono: 'meta',
+    });
+  }
+
+  if (!cambio) return { data, festejos };
+  return {
+    data: { ...data, progreso: { logros: nuevoRegistro, ...(metaCelebrada ? { metaCelebrada } : {}) } },
+    festejos,
+  };
 }
 
-export function guardarVistos(ids: string[]) {
-  try {
-    localStorage.setItem(VISTOS_KEY, JSON.stringify(ids));
-  } catch {
-    /* sin acceso al almacenamiento */
+const solesTexto = (n: number) =>
+  `S/ ${n.toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+/* ---------- Validación al restaurar un respaldo ---------- */
+
+const DIA_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+/**
+ * Limpia metas y registro de progreso de un respaldo. Lo dañado se descarta
+ * (se vuelve a lo de por defecto) en vez de rechazar todo el respaldo.
+ */
+export function sanearGamificacion(data: Record<string, unknown>) {
+  const m = data.metas as Record<string, unknown> | null | undefined;
+  if (m !== undefined) {
+    if (!m || typeof m !== 'object' || typeof m.rescateDiarioSoles !== 'number' || !(m.rescateDiarioSoles > 0)) {
+      delete data.metas;
+    } else {
+      const h = Array.isArray(m.historial)
+        ? (m.historial as Record<string, unknown>[])
+            .filter((c) => c && typeof c.desde === 'string' && DIA_RE.test(c.desde as string) && typeof c.soles === 'number' && (c.soles as number) > 0)
+            .map((c) => ({ desde: c.desde as string, soles: c.soles as number }))
+            .sort((a, b) => a.desde.localeCompare(b.desde))
+        : [];
+      data.metas = { rescateDiarioSoles: m.rescateDiarioSoles, ...(h.length > 0 ? { historial: h } : {}) };
+    }
+  }
+  const p = data.progreso as Record<string, unknown> | null | undefined;
+  if (p !== undefined) {
+    const logros = p && typeof p === 'object' && p.logros && typeof p.logros === 'object' && !Array.isArray(p.logros)
+      ? Object.fromEntries(
+          Object.entries(p.logros as Record<string, unknown>).filter(
+            ([, f]) => typeof f === 'string' && Number.isFinite(new Date(f).getTime()),
+          ),
+        )
+      : null;
+    if (!logros) delete data.progreso;
+    else {
+      const mc = typeof p!.metaCelebrada === 'string' && DIA_RE.test(p!.metaCelebrada) ? p!.metaCelebrada : undefined;
+      data.progreso = { logros, ...(mc ? { metaCelebrada: mc } : {}) };
+    }
   }
 }
