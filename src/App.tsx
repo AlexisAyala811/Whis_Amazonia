@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Bell, Home, Leaf, Package, Plus, UserRound, Zap } from 'lucide-react';
 import { AddBatchSheet } from './components/AddBatchSheet';
-import { Bienvenida } from './components/Bienvenida';
+import { Bienvenida, debeMostrarEntrada } from './components/Bienvenida';
 import { BatchesView } from './components/BatchesView';
 import { ColdChainView } from './components/ColdChainView';
 import { DashboardView } from './components/DashboardView';
@@ -37,6 +37,7 @@ export default function App() {
   const [vista, setVista] = useState<Vista>('inicio');
   const [nuevoLote, setNuevoLote] = useState(false);
   const [ajustes, setAjustes] = useState(false);
+  const [entrada, setEntrada] = useState(debeMostrarEntrada);
   const [productos, setProductos] = useState(false);
   const [progreso, setProgreso] = useState(false);
   const [accionesId, setAccionesId] = useState<string | null>(null);
@@ -157,7 +158,7 @@ export default function App() {
         </div>
       </nav>
 
-      <Bienvenida />
+      <Bienvenida open={entrada} onEntrar={() => setEntrada(false)} />
       <AddBatchSheet open={nuevoLote} onClose={() => setNuevoLote(false)} />
       <SettingsSheet
         open={ajustes}
@@ -167,6 +168,10 @@ export default function App() {
         onProductos={() => {
           setAjustes(false);
           setProductos(true);
+        }}
+        onEntrada={() => {
+          setAjustes(false);
+          setEntrada(true);
         }}
       />
       <ProductosSheet open={productos} onClose={() => setProductos(false)} />
