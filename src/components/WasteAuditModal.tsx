@@ -8,13 +8,13 @@ import { BottomSheet } from './ui/BottomSheet';
 import { ModernSelect } from './ui/ModernSelect';
 import { useToast } from './ui/Toast';
 
-/** Reduce la foto a máx. 800 px y JPEG 70 % para guardarla offline sin llenar el almacenamiento. */
+/** Reduce la foto a máx. 640 px y JPEG 60 % (≈40–70 KB) para guardarla offline sin llenar el almacenamiento. */
 const comprimirFoto = (file: File): Promise<string> =>
   new Promise((resolve, reject) => {
     const url = URL.createObjectURL(file);
     const img = new Image();
     img.onload = () => {
-      const max = 800;
+      const max = 640;
       const escala = Math.min(1, max / Math.max(img.width, img.height));
       const canvas = document.createElement('canvas');
       canvas.width = Math.round(img.width * escala);
@@ -30,7 +30,7 @@ const comprimirFoto = (file: File): Promise<string> =>
       ctx.font = '14px sans-serif';
       ctx.fillText(`Whis · evidencia ${sello}`, 10, canvas.height - 9);
       URL.revokeObjectURL(url);
-      resolve(canvas.toDataURL('image/jpeg', 0.7));
+      resolve(canvas.toDataURL('image/jpeg', 0.6));
     };
     img.onerror = () => {
       URL.revokeObjectURL(url);

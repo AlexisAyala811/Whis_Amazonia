@@ -1,6 +1,7 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Boxes, Home, Moon, Plus, Settings2, Snowflake, Sun, Wifi, WifiOff, Zap } from 'lucide-react';
 import { AddBatchSheet } from './components/AddBatchSheet';
+import { Bienvenida } from './components/Bienvenida';
 import { BatchesView } from './components/BatchesView';
 import { ColdChainView } from './components/ColdChainView';
 import { DashboardView } from './components/DashboardView';
@@ -9,10 +10,12 @@ import { LiquidationView } from './components/LiquidationView';
 import { SettingsSheet } from './components/SettingsSheet';
 import { ThermalChartModal } from './components/ThermalChartModal';
 import { WasteAuditModal } from './components/WasteAuditModal';
+import { useToast } from './components/ui/Toast';
 import { useOnline, useTheme } from './hooks/useDevice';
 import { useWhisStore } from './hooks/useWhisStore';
 import type { Vista } from './types';
 import type { LoteFefo } from './utils/fefoEngine';
+import { diasDesdeRespaldo } from './utils/persistencia';
 
 const TABS: { id: Vista; label: string; icon: typeof Home }[] = [
   { id: 'inicio', label: 'Inicio', icon: Home },
@@ -24,7 +27,8 @@ const TABS: { id: Vista; label: string; icon: typeof Home }[] = [
 export default function App() {
   const online = useOnline();
   const [tema, toggleTema] = useTheme();
-  const { activos } = useWhisStore();
+  const { activos, data, primeraVez, recuperacion } = useWhisStore();
+  const toast = useToast();
   const [vista, setVista] = useState<Vista>('inicio');
   const [nuevoLote, setNuevoLote] = useState(false);
   const [ajustes, setAjustes] = useState(false);
@@ -32,6 +36,21 @@ export default function App() {
   const [curvaId, setCurvaId] = useState<string | null>(null);
   const [bajaId, setBajaId] = useState<string | null>(null);
   const [preLiquidar, setPreLiquidar] = useState<string | null>(null);
+
+  // Recordatorio de respaldo (una vez por apertura) y aviso de datos sin abrir
+  useEffect(() => {
+    if (primeraVez) return;
+    if (recuperacion) {
+      toast('aviso', 'Había datos que no se pudieron abrir', 'Se guardaron aparte. Revisa Ajustes.');
+      return;
+    }
+    const dias = diasDesdeRespaldo();
+    const hayDatos = data.lotes.length + data.compradores.length > 0;
+    if (data.modo === 'real' && hayDatos && (dias === null || dias >= 7)) {
+      toast('info', 'Haz un respaldo', dias === null ? 'Aún no exportas una copia de tus datos.' : `Último respaldo hace ${dias} días. Ajustes → Exportar respaldo JSON.`);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [primeraVez]);
 
   const buscar = (id: string | null) => activos.find((l) => l.id === id) ?? null;
   const criticos = activos.filter((l) => l.fefo.semaforo === 'rojo').length;
@@ -59,6 +78,11 @@ export default function App() {
             {online ? <Wifi size={12} /> : <WifiOff size={12} />}
             {online ? 'En línea' : 'Offline'}
           </span>
+          {data.modo === 'demo' && !primeraVez && (
+            <button onClick={() => setAjustes(true)} className="pill bg-brand/15 text-brand" title="Estás viendo datos de ejemplo">
+              Demo
+            </button>
+          )}
           <div className="ml-auto flex items-center gap-1">
             <button
               onClick={toggleTema}
@@ -125,6 +149,7 @@ export default function App() {
         </div>
       </nav>
 
+      <Bienvenida />
       <AddBatchSheet open={nuevoLote} onClose={() => setNuevoLote(false)} />
       <SettingsSheet open={ajustes} onClose={() => setAjustes(false)} tema={tema} toggleTema={toggleTema} />
       <DispatchSheet lote={buscar(despachoId)} onClose={() => setDespachoId(null)} />

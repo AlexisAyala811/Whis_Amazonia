@@ -112,8 +112,12 @@ export interface ResumenSemanal {
   perdido: number;
 }
 
+export type ModoDatos = 'demo' | 'real';
+
 export interface AppData {
   version: number;
+  /** 'demo' = datos de ejemplo; 'real' = datos del negocio */
+  modo: ModoDatos;
   lotes: Lote[];
   eventos: EventoTermico[];
   compradores: CompradorB2B[];
