@@ -1,4 +1,4 @@
-import type { Camara, CamaraId, CondicionLlegada, MotivoBaja, Producto } from '../types';
+import type { Camara, CamaraId, CategoriaProducto, CondicionLlegada, MotivoBaja, Producto } from '../types';
 
 export const CATALOGO: Producto[] = [
   {
@@ -121,8 +121,60 @@ export const MOTIVOS_BAJA: { id: MotivoBaja; nombre: string; detalle: string }[]
 /** Margen comercial por defecto sobre el costo */
 export const MARGEN_VENTA = 1.35;
 
+// ---------- Catálogo activo (editable por el negocio) ----------
+
+let catalogoActivo: Producto[] = CATALOGO;
+
+/** Productos que usa la app ahora: los del negocio o, si no hay, el catálogo base. */
+export const getCatalogo = (): Producto[] => catalogoActivo;
+
+/** Fija el catálogo activo. Sin lista (o vacía) vuelve al catálogo base. */
+export const usarCatalogo = (lista?: Producto[]): Producto[] => {
+  catalogoActivo = lista && lista.length > 0 ? lista : CATALOGO;
+  return catalogoActivo;
+};
+
 export const getProducto = (id: string): Producto =>
-  CATALOGO.find((p) => p.id === id) ?? CATALOGO[0];
+  catalogoActivo.find((p) => p.id === id) ?? CATALOGO.find((p) => p.id === id) ?? catalogoActivo[0] ?? CATALOGO[0];
+
+export const CATEGORIAS: { id: CategoriaProducto; nombre: string }[] = [
+  { id: 'carnes', nombre: 'Carnes' },
+  { id: 'pescados', nombre: 'Pescados' },
+  { id: 'lacteos', nombre: 'Lácteos' },
+  { id: 'frutas', nombre: 'Frutas' },
+  { id: 'otros', nombre: 'Otros' },
+];
+
+/** Qué tan rápido se malogra fuera del frío: multiplica las horas de calor. */
+export const SENSIBILIDADES: { factor: number; nombre: string; detalle: string }[] = [
+  { factor: 1.8, nombre: 'Baja', detalle: 'Aguanta el calor (plátano, tubérculos)' },
+  { factor: 2.5, nombre: 'Media', detalle: 'Frutas y lácteos' },
+  { factor: 3.2, nombre: 'Alta', detalle: 'Carnes rojas' },
+  { factor: 4.0, nombre: 'Muy alta', detalle: 'Pescado y pollo' },
+];
+
+export const sensibilidadCercana = (factor: number) =>
+  SENSIBILIDADES.reduce((a, b) => (Math.abs(b.factor - factor) < Math.abs(a.factor - factor) ? b : a));
+
+/** Minúsculas, sin tildes ni signos: para comparar nombres y palabras dictadas. */
+export const normalizarTexto = (s: string) =>
+  s
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+
+/** Palabras clave para reconocer el producto al dictar por voz. */
+export const clavesDesdeNombre = (nombre: string): string[] => {
+  const palabras = normalizarTexto(nombre)
+    .split(/[^a-z]+/)
+    .filter((w) => w.length >= 3 && !['del', 'los', 'las', 'con', 'para'].includes(w));
+  const claves = new Set<string>();
+  for (const w of palabras) {
+    claves.add(w);
+    claves.add(w.endsWith('s') ? w.slice(0, -1) : `${w}s`);
+  }
+  return [...claves];
+};
 
 export const getCamara = (id: CamaraId): Camara => CAMARAS.find((c) => c.id === id) ?? CAMARAS[0];
 
@@ -130,6 +182,7 @@ export const getCamara = (id: CamaraId): Camara => CAMARAS.find((c) => c.id === 
 export const camaraSugerida = (productoId: string): CamaraId => {
   const p = getProducto(productoId);
   if (p.categoria === 'carnes' || p.categoria === 'pescados') return 'camara1';
-  if (p.id === 'platano') return 'almacen';
+  // Productos que se guardan sobre 13 °C (plátano, maduración controlada)
+  if (p.tempMin >= 13) return 'almacen';
   return 'camara2';
 };

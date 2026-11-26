@@ -1,39 +1,39 @@
 import { useMemo, useState } from 'react';
-import { Activity, Boxes, Search, Trash2, Truck, Warehouse } from 'lucide-react';
+import { Boxes, Search, Warehouse } from 'lucide-react';
 import { CAMARAS, getProducto } from '../data/catalog';
 import { useWhisStore } from '../hooks/useWhisStore';
 import type { Semaforo } from '../types';
 import { type LoteFefo } from '../utils/fefoEngine';
-import { LoteCard } from './LoteCard';
+import { AccionRapida, LoteFila } from './LoteFila';
 import { ModernSelect, type SelectOption } from './ui/ModernSelect';
 
 type Filtro = 'todos' | Semaforo;
 
 const FILTROS: { id: Filtro; label: string; dot?: string }[] = [
-  { id: 'todos', label: 'Todos' },
+  { id: 'todos', label: 'Todos', dot: 'bg-muted' },
   { id: 'rojo', label: 'Críticos', dot: 'bg-danger' },
   { id: 'amarillo', label: 'Prioritarios', dot: 'bg-warn' },
   { id: 'verde', label: 'Óptimos', dot: 'bg-ok' },
 ];
 
 interface Props {
+  onAbrir: (l: LoteFefo) => void;
   onDespachar: (l: LoteFefo) => void;
-  onCurva: (l: LoteFefo) => void;
-  onBaja: (l: LoteFefo) => void;
+  onLiquidar: (l: LoteFefo) => void;
 }
 
-export function BatchesView({ onDespachar, onCurva, onBaja }: Props) {
+export function BatchesView({ onAbrir, onDespachar, onLiquidar }: Props) {
   const { activos } = useWhisStore();
   const [filtro, setFiltro] = useState<Filtro>('todos');
   const [camara, setCamara] = useState<string>('todas');
   const [q, setQ] = useState('');
 
   const opcionesCamara: SelectOption[] = [
-    { value: 'todas', label: 'Todas las cámaras', description: `${activos.length} lotes activos`, icon: <Boxes size={18} /> },
+    { value: 'todas', label: 'Todas', description: `Todas las cámaras · ${activos.length} lotes activos`, icon: <Boxes size={18} /> },
     ...CAMARAS.map((c) => ({
       value: c.id,
-      label: c.nombre,
-      description: `${c.descripcion} · ${c.tempObjetivo}`,
+      label: c.nombre.split(' - ')[0],
+      description: `${c.nombre} · ${c.tempObjetivo}`,
       icon: <Warehouse size={18} />,
     })),
   ];
@@ -56,30 +56,32 @@ export function BatchesView({ onDespachar, onCurva, onBaja }: Props) {
     <div className="space-y-4">
       <div>
         <h1 className="text-xl font-bold">Inventario de lotes</h1>
-        <p className="text-xs text-muted">Ordenados por vida útil real restante (FEFO térmico)</p>
+        <p className="text-xs text-muted">Primero los que vencen antes. Toca un lote para ver sus acciones.</p>
       </div>
 
-      <div className="-mx-4 flex gap-2 overflow-x-auto px-4 no-scrollbar">
+      <div className="grid grid-cols-4 gap-1.5" role="group" aria-label="Filtrar por estado">
         {FILTROS.map((f) => {
           const act = filtro === f.id;
           return (
             <button
               key={f.id}
               onClick={() => setFiltro(f.id)}
-              className={`inline-flex min-h-[44px] shrink-0 items-center gap-2 rounded-full border px-4 text-sm font-semibold transition-all duration-200 ease-out active:scale-95 ${
+              aria-pressed={act}
+              className={`flex min-h-[56px] min-w-0 flex-col items-center justify-center rounded-2xl border px-1 transition-all duration-200 ease-out active:scale-95 ${
                 act ? 'border-transparent bg-ink text-canvas' : 'border-line bg-surface text-muted'
               }`}
             >
-              {f.dot && <span className={`h-2 w-2 rounded-full ${f.dot}`} />}
-              {f.label}
-              <span className={`rounded-full px-1.5 text-[11px] tabular-nums ${act ? 'bg-canvas/20' : 'bg-surface2'}`}>{conteo(f.id)}</span>
+              <span className="flex items-center gap-1.5 text-lg font-bold leading-tight tabular-nums">
+                <span className={`h-2 w-2 rounded-full ${f.dot}`} />
+                {conteo(f.id)}
+              </span>
+              <span className="max-w-full truncate text-[11px] font-semibold">{f.label}</span>
             </button>
           );
         })}
       </div>
 
-      <div className="grid grid-cols-[minmax(0,1fr)_112px] gap-2">
-        <ModernSelect value={camara} onChange={setCamara} options={opcionesCamara} sheetTitle="Filtrar por cámara" compact />
+      <div className="grid grid-cols-2 gap-2">
         <div className="relative">
           <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
           <input
@@ -90,29 +92,20 @@ export function BatchesView({ onDespachar, onCurva, onBaja }: Props) {
             aria-label="Buscar lote"
           />
         </div>
+        <ModernSelect value={camara} onChange={setCamara} options={opcionesCamara} sheetTitle="Filtrar por cámara" compact />
       </div>
 
-      <div className="space-y-3">
+      <div className="space-y-2">
         {visibles.length === 0 && (
           <div className="card p-8 text-center text-sm text-muted">No hay lotes con este filtro.</div>
         )}
         {visibles.map((l) => (
-          <LoteCard
+          <LoteFila
             key={l.id}
             lote={l}
-            acciones={
-              <>
-                <button className="btn-ghost flex-1 px-2" onClick={() => onDespachar(l)}>
-                  <Truck size={16} /> Despachar
-                </button>
-                <button className="btn-ghost flex-1 px-2" onClick={() => onCurva(l)}>
-                  <Activity size={16} /> Curva
-                </button>
-                <button className="btn flex-1 bg-danger/10 px-2 text-danger" onClick={() => onBaja(l)}>
-                  <Trash2 size={16} /> Baja
-                </button>
-              </>
-            }
+            mostrarCamara
+            onAbrir={() => onAbrir(l)}
+            accion={<AccionRapida lote={l} onDespachar={onDespachar} onLiquidar={onLiquidar} />}
           />
         ))}
       </div>

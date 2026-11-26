@@ -1,4 +1,4 @@
-import { CATALOGO } from '../data/catalog';
+import { getCatalogo } from '../data/catalog';
 import type { CamaraId } from '../types';
 
 export interface DatosDictados {
@@ -68,7 +68,7 @@ export function interpretarDictado(frase: string): DatosDictados {
   else if (/almacen/.test(t)) r.camaraId = 'almacen';
 
   const palabras = t.split(/[^a-z]+/);
-  for (const p of CATALOGO) {
+  for (const p of getCatalogo()) {
     if (p.claves.some((k) => palabras.includes(k) || (k.length > 5 && t.includes(k)))) {
       r.productoId = p.id;
       break;

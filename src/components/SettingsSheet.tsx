@@ -8,6 +8,7 @@ import {
   FileUp,
   FlaskConical,
   Moon,
+  Package,
   Sun,
   Trash2,
 } from 'lucide-react';
@@ -24,6 +25,7 @@ interface Props {
   onClose: () => void;
   tema: Tema;
   toggleTema: () => void;
+  onProductos: () => void;
 }
 
 type Confirmacion =
@@ -42,8 +44,8 @@ const textoRespaldo = (dias: number | null) => {
   return `Último respaldo: hace ${dias} días`;
 };
 
-export function SettingsSheet({ open, onClose, tema, toggleTema }: Props) {
-  const { data, guardadoOk, empezarVacio, cargarDemo, reemplazarDatos, recuperacion, descartarRecuperacion } =
+export function SettingsSheet({ open, onClose, tema, toggleTema, onProductos }: Props) {
+  const { data, productos, guardadoOk, empezarVacio, cargarDemo, reemplazarDatos, recuperacion, descartarRecuperacion } =
     useWhisStore();
   const toast = useToast();
   const [confirmacion, setConfirmacion] = useState<Confirmacion>(null);
@@ -88,7 +90,7 @@ export function SettingsSheet({ open, onClose, tema, toggleTema }: Props) {
   };
 
   return (
-    <BottomSheet open={open} onClose={cerrar} title="Ajustes" subtitle="Whis · v0.2">
+    <BottomSheet open={open} onClose={cerrar} title="Ajustes" subtitle="Whis · v0.3">
       <div className="space-y-1">
         {recuperacion && (
           <div className="mb-2 rounded-2xl bg-warn/10 p-3 text-sm">
@@ -118,6 +120,14 @@ export function SettingsSheet({ open, onClose, tema, toggleTema }: Props) {
             </div>
           </div>
         )}
+
+        <Fila
+          clase={fila}
+          icono={<span className={icono}><Package size={18} /></span>}
+          titulo="Mis productos"
+          detalle={`${productos.length} productos · vida útil, frío ideal y costo`}
+          onClick={onProductos}
+        />
 
         <Fila icono={<span className={icono}>{tema === 'dark' ? <Sun size={18} /> : <Moon size={18} />}</span>} clase={fila} onClick={toggleTema}
           titulo={`Tema ${tema === 'dark' ? 'claro (Warm Cream)' : 'oscuro (Obsidian)'}`} detalle="Cambiar apariencia" />

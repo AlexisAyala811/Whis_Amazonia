@@ -1,12 +1,13 @@
 import { useMemo } from 'react';
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import { AlertTriangle, ArrowRight, Banknote, HardDriveDownload, ShieldCheck, Truck, Zap } from 'lucide-react';
+import { AlertTriangle, ArrowRight, Banknote, BarChart3, HardDriveDownload, ShieldCheck } from 'lucide-react';
 import { useWhisStore } from '../hooks/useWhisStore';
 import { solesCorto, soles, type LoteFefo } from '../utils/fefoEngine';
-import { LoteCard } from './LoteCard';
+import { AccionRapida, LoteFila } from './LoteFila';
 
 interface Props {
   online: boolean;
+  onAbrir: (l: LoteFefo) => void;
   onDespachar: (l: LoteFefo) => void;
   onLiquidar: (l: LoteFefo) => void;
   onVerLotes: () => void;
@@ -18,7 +19,7 @@ const SEMANA_MS = 7 * 24 * 3_600_000;
 const ejeSoles = (v: number): string =>
   v >= 1000 ? `${(v / 1000).toLocaleString('es-PE', { maximumFractionDigits: 1 })}k` : String(v);
 
-export function DashboardView({ online, onDespachar, onLiquidar, onVerLotes }: Props) {
+export function DashboardView({ online, onAbrir, onDespachar, onLiquidar, onVerLotes }: Props) {
   const { data, activos, ahora } = useWhisStore();
 
   const kpi = useMemo(() => {
@@ -56,26 +57,16 @@ export function DashboardView({ online, onDespachar, onLiquidar, onVerLotes }: P
   }, [data, ahora]);
 
   const prioritarios = activos.slice(0, 5);
+  const graficoVacio = semanal.every((w) => w.recuperado === 0 && w.perdido === 0);
 
   return (
     <div className="space-y-5">
-      <div
-        className={`flex items-center gap-2.5 rounded-2xl border px-3.5 py-2.5 text-xs ${
-          online ? 'border-line bg-surface text-muted' : 'border-warn/30 bg-warn/10 text-warn'
-        }`}
-      >
-        <HardDriveDownload size={16} className="shrink-0" />
-        <span>
-          {online ? (
-            <>
-              <b className="font-semibold text-ink">En línea</b> · Todo se guarda localmente en este equipo, también funciona
-              sin internet.
-            </>
-          ) : (
-            <b className="font-semibold">Modo Offline Activo — Datos guardados localmente</b>
-          )}
-        </span>
-      </div>
+      {!online && (
+        <div className="flex items-center gap-2.5 rounded-2xl border border-warn/30 bg-warn/10 px-3.5 py-2.5 text-xs text-warn">
+          <HardDriveDownload size={16} className="shrink-0" />
+          <b className="font-semibold">Sin internet: todo sigue funcionando y se guarda en este equipo</b>
+        </div>
+      )}
 
       {/* KPI */}
       <section className="grid grid-cols-2 gap-3">
@@ -115,34 +106,22 @@ export function DashboardView({ online, onDespachar, onLiquidar, onVerLotes }: P
         <div className="mb-3 flex items-end justify-between">
           <div>
             <h2 className="text-base font-bold">Qué sacar primero hoy</h2>
-            <p className="text-xs text-muted">Orden FEFO térmico: menor vida útil real primero</p>
+            <p className="text-xs text-muted">Toca un lote para ver todas sus acciones</p>
           </div>
           <button onClick={onVerLotes} className="inline-flex min-h-[44px] shrink-0 items-center gap-1 whitespace-nowrap text-sm font-semibold text-brand">
             Ver todo <ArrowRight size={16} />
           </button>
         </div>
-        <div className="space-y-3">
+        <div className="space-y-2">
           {prioritarios.length === 0 && (
             <div className="card p-6 text-center text-sm text-muted">No hay lotes activos. Registra uno con el botón +.</div>
           )}
           {prioritarios.map((l) => (
-            <LoteCard
+            <LoteFila
               key={l.id}
               lote={l}
-              compacto
-              acciones={
-                <>
-                  <button className="btn-ghost flex-1" onClick={() => onDespachar(l)}>
-                    <Truck size={16} /> Despachar
-                  </button>
-                  <button
-                    className={`btn flex-1 ${l.fefo.semaforo === 'verde' ? 'border border-line bg-surface text-muted' : 'bg-danger/15 text-danger'}`}
-                    onClick={() => onLiquidar(l)}
-                  >
-                    <Zap size={16} /> Liquidar
-                  </button>
-                </>
-              }
+              onAbrir={() => onAbrir(l)}
+              accion={<AccionRapida lote={l} onDespachar={onDespachar} onLiquidar={onLiquidar} />}
             />
           ))}
         </div>
@@ -152,6 +131,15 @@ export function DashboardView({ online, onDespachar, onLiquidar, onVerLotes }: P
       <section className="card p-4">
         <h2 className="text-base font-bold">Recuperado vs. perdido por merma</h2>
         <p className="mb-3 text-xs text-muted">Soles por semana</p>
+        {graficoVacio ? (
+          <div className="flex flex-col items-center gap-2 rounded-2xl bg-surface2/50 px-4 py-8 text-center">
+            <BarChart3 size={22} className="text-muted" />
+            <p className="text-sm text-muted">
+              Aún no hay remates ni bajas. Cuando liquides o registres mermas, aquí verás cada semana cuánto recuperaste y cuánto
+              perdiste.
+            </p>
+          </div>
+        ) : (
         <div className="h-52 w-full">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={semanal} margin={{ top: 4, right: 0, left: 0, bottom: 0 }} barGap={2}>
@@ -186,6 +174,7 @@ export function DashboardView({ online, onDespachar, onLiquidar, onVerLotes }: P
             </BarChart>
           </ResponsiveContainer>
         </div>
+        )}
       </section>
     </div>
   );
