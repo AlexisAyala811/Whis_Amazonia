@@ -81,6 +81,7 @@ interface Store {
   deshacer: Deshacer | null;
   deshacerUltimo: () => string | null;
   olvidarDeshacer: () => void;
+  fijarMetaDiaria: (soles: number) => void;
 }
 
 const StoreCtx = createContext<Store | null>(null);
@@ -379,6 +380,11 @@ export function WhisStoreProvider({ children }: { children: ReactNode }) {
     setAhora(Date.now());
   }, []);
 
+  const fijarMetaDiaria = useCallback((soles: number) => {
+    if (!(soles > 0)) return;
+    setData((d) => ({ ...d, metas: { ...d.metas, rescateDiarioSoles: Math.round(soles) } }));
+  }, []);
+
   const siguienteCodigo = useCallback((): string => {
     const usados = new Set(data.lotes.map((l) => l.codigoQR));
     let n = 104;
@@ -413,6 +419,7 @@ export function WhisStoreProvider({ children }: { children: ReactNode }) {
     deshacer,
     deshacerUltimo,
     olvidarDeshacer,
+    fijarMetaDiaria,
   };
 
   return <StoreCtx.Provider value={value}>{children}</StoreCtx.Provider>;

@@ -4,6 +4,7 @@ import { AlertTriangle, ArrowRight, Banknote, BarChart3, HardDriveDownload, Shie
 import { useWhisStore } from '../hooks/useWhisStore';
 import { solesCorto, soles, type LoteFefo } from '../utils/fefoEngine';
 import { AccionRapida, LoteFila } from './LoteFila';
+import { MetaDelDiaCard } from './Progreso';
 
 interface Props {
   online: boolean;
@@ -11,6 +12,7 @@ interface Props {
   onDespachar: (l: LoteFefo) => void;
   onLiquidar: (l: LoteFefo) => void;
   onVerLotes: () => void;
+  onProgreso: () => void;
 }
 
 const SEMANA_MS = 7 * 24 * 3_600_000;
@@ -19,7 +21,7 @@ const SEMANA_MS = 7 * 24 * 3_600_000;
 const ejeSoles = (v: number): string =>
   v >= 1000 ? `${(v / 1000).toLocaleString('es-PE', { maximumFractionDigits: 1 })}k` : String(v);
 
-export function DashboardView({ online, onAbrir, onDespachar, onLiquidar, onVerLotes }: Props) {
+export function DashboardView({ online, onAbrir, onDespachar, onLiquidar, onVerLotes, onProgreso }: Props) {
   const { data, activos, ahora } = useWhisStore();
 
   const kpi = useMemo(() => {
@@ -98,6 +100,9 @@ export function DashboardView({ online, onAbrir, onDespachar, onLiquidar, onVerL
           <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-surface2">
             <div className="h-full rounded-full bg-brand transition-all duration-500" style={{ width: `${kpi.mermaEvitada}%` }} />
           </div>
+        </div>
+        <div className="col-span-2">
+          <MetaDelDiaCard onAbrir={onProgreso} />
         </div>
       </section>
 
