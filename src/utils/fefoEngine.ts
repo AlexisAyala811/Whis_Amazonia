@@ -15,6 +15,7 @@ export const clasificar = (porcentaje: number): Semaforo => {
 
 /**
  * Motor FEFO térmico.
+ *   horasEnFrio = horasTranscurridas − horasApagonEnCamara
  *   horasEquivalentesConsumidas = horasEnFrio + horasExposicionCalor × factorRiesgoCalor
  *   horasRestantes = max(0, vidaBase − horasEquivalentesConsumidas)
  *   porcentajeVidaUtil = round(horasRestantes / vidaBase × 100)
@@ -22,7 +23,11 @@ export const clasificar = (porcentaje: number): Semaforo => {
 export const calcularFefo = (lote: Lote, ahora: number = Date.now()): FefoResultado => {
   const p = getProducto(lote.productoId);
   const horasTranscurridas = horasDesde(lote.fechaIngreso, ahora);
-  const horasEquivalentesConsumidas = horasTranscurridas + lote.horasExposicionCalor * p.factorRiesgoCalor;
+  // Las horas de apagón ya están dentro del tiempo transcurrido: se restan del
+  // tiempo en frío para no contarlas dos veces (una ×1 y otra ×factor).
+  const horasApagon = Math.min(lote.horasApagonEnCamara ?? 0, horasTranscurridas);
+  const horasEquivalentesConsumidas =
+    horasTranscurridas - horasApagon + lote.horasExposicionCalor * p.factorRiesgoCalor;
   const horasRestantes = Math.max(0, p.vidaBaseHoras - horasEquivalentesConsumidas);
   const porcentajeVidaUtil = Math.round((horasRestantes / p.vidaBaseHoras) * 100);
   return {
@@ -34,6 +39,13 @@ export const calcularFefo = (lote: Lote, ahora: number = Date.now()): FefoResult
     valorComercial: lote.pesoKg * lote.precioVentaKg,
   };
 };
+
+/** Registra un apagón en el lote: horas de calor que ocurrieron ya dentro de la cámara */
+export const conApagon = (l: Lote, horas: number): Lote => ({
+  ...l,
+  horasExposicionCalor: +(l.horasExposicionCalor + horas).toFixed(2),
+  horasApagonEnCamara: +((l.horasApagonEnCamara ?? 0) + horas).toFixed(2),
+});
 
 export interface LoteFefo extends Lote {
   fefo: FefoResultado;
@@ -73,12 +85,12 @@ export const kg = (n: number): string =>
 
 export const formatoHoras = (h: number): string => {
   if (h <= 0) return 'Vencido';
-  if (h < 1) return `${Math.max(1, Math.round(h * 60))} min`;
-  if (h < 48) return `${Math.floor(h)} h ${Math.round((h % 1) * 60)
-    .toString()
-    .padStart(2, '0')} min`;
-  const d = Math.floor(h / 24);
-  return `${d} d ${Math.round(h - d * 24)} h`;
+  // Se redondea primero a minutos para no mostrar "1 h 60 min" ni "2 d 24 h"
+  const minutos = Math.max(1, Math.round(h * 60));
+  if (minutos < 60) return `${minutos} min`;
+  if (minutos < 48 * 60) return `${Math.floor(minutos / 60)} h ${(minutos % 60).toString().padStart(2, '0')} min`;
+  const horas = Math.round(h);
+  return `${Math.floor(horas / 24)} d ${horas % 24} h`;
 };
 
 export const formatoFecha = (iso: string): string =>

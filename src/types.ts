@@ -46,6 +46,12 @@ export interface Lote {
   fechaIngreso: string;
   /** Horas acumuladas fuera del rango térmico (llegada + apagones) */
   horasExposicionCalor: number;
+  /**
+   * Parte de horasExposicionCalor que ocurrió con el lote ya en cámara (apagones).
+   * Esas horas ya corren en el reloj desde fechaIngreso, así que el motor no las
+   * cuenta además como tiempo en frío.
+   */
+  horasApagonEnCamara?: number;
   condicionLlegada: CondicionLlegada;
   estado: EstadoLote;
 }
