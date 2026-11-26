@@ -133,6 +133,13 @@ export interface AppData {
   historialSemanal: ResumenSemanal[];
   /** Catálogo propio del negocio. Si falta, se usa el catálogo base. */
   productos?: Producto[];
+  /** Metas del negocio (gamificación). Si falta, se usan las de por defecto. */
+  metas?: Metas;
+}
+
+export interface Metas {
+  /** Soles a recuperar por remates cada día */
+  rescateDiarioSoles: number;
 }
 
 export interface FefoResultado {

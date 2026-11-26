@@ -10,6 +10,7 @@ import { EditLoteSheet } from './components/EditLoteSheet';
 import { LiquidationView } from './components/LiquidationView';
 import { LoteAccionesSheet } from './components/LoteAccionesSheet';
 import { ProductosSheet } from './components/ProductosSheet';
+import { Celebracion, ProgresoSheet } from './components/Progreso';
 import { SettingsSheet } from './components/SettingsSheet';
 import { ThermalChartModal } from './components/ThermalChartModal';
 import { UndoBar } from './components/UndoBar';
@@ -37,6 +38,7 @@ export default function App() {
   const [nuevoLote, setNuevoLote] = useState(false);
   const [ajustes, setAjustes] = useState(false);
   const [productos, setProductos] = useState(false);
+  const [progreso, setProgreso] = useState(false);
   const [accionesId, setAccionesId] = useState<string | null>(null);
   const [editarId, setEditarId] = useState<string | null>(null);
   const [despachoId, setDespachoId] = useState<string | null>(null);
@@ -123,6 +125,7 @@ export default function App() {
             onDespachar={(l) => setDespachoId(l.id)}
             onLiquidar={liquidarLote}
             onVerLotes={() => irA('lotes')}
+            onProgreso={() => setProgreso(true)}
           />
         )}
         {vista === 'lotes' && (
@@ -185,7 +188,9 @@ export default function App() {
       <DispatchSheet lote={buscar(despachoId)} onClose={() => setDespachoId(null)} />
       <ThermalChartModal lote={buscar(curvaId)} onClose={() => setCurvaId(null)} />
       <WasteAuditModal lote={buscar(bajaId)} onClose={() => setBajaId(null)} />
+      <ProgresoSheet open={progreso} onClose={() => setProgreso(false)} />
       <UndoBar />
+      <Celebracion onVerProgreso={() => setProgreso(true)} />
     </div>
   );
 }

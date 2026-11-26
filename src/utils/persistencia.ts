@@ -45,6 +45,11 @@ export function validarYMigrar(entrada: unknown): ResultadoValidacion {
       );
     if (!ok) return { ok: false, motivo: 'La sección "productos" está dañada.' };
   }
+  if (data.metas !== undefined) {
+    const m = data.metas as Record<string, unknown> | null;
+    // Una meta dañada no invalida el respaldo: se vuelve a la de por defecto
+    if (!m || typeof m.rescateDiarioSoles !== 'number' || !(m.rescateDiarioSoles > 0)) delete data.metas;
+  }
   if (data.modo !== 'demo' && data.modo !== 'real') {
     // Datos creados antes de existir el modo: si conservan los lotes semilla, eran demo.
     data.modo = (data.lotes as { id?: string }[]).some((l) => l?.id?.startsWith('lote_seed_')) ? 'demo' : 'real';

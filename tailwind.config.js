@@ -32,6 +32,17 @@ export default {
         },
         wave: { '0%,100%': { transform: 'scaleY(0.35)' }, '50%': { transform: 'scaleY(1)' } },
         grow: { from: { transform: 'scaleX(0)' }, to: { transform: 'scaleX(1)' } },
+        'pop-in': {
+          '0%': { opacity: '0', transform: 'scale(0.85)' },
+          '60%': { opacity: '1', transform: 'scale(1.03)' },
+          '100%': { opacity: '1', transform: 'scale(1)' },
+        },
+        ring: { '0%': { transform: 'scale(0.7)', opacity: '0.9' }, '100%': { transform: 'scale(1.5)', opacity: '0' } },
+        destello: {
+          '0%': { transform: 'translateY(-10px) rotate(0deg)', opacity: '0' },
+          '15%': { opacity: '1' },
+          '100%': { transform: 'translateY(260px) rotate(var(--giro, 180deg))', opacity: '0' },
+        },
       },
       animation: {
         'sheet-in': 'sheet-in 260ms cubic-bezier(0.22, 1, 0.36, 1)',
@@ -39,6 +50,9 @@ export default {
         'toast-in': 'toast-in 220ms ease-out',
         wave: 'wave 900ms ease-in-out infinite',
         grow: 'grow 700ms cubic-bezier(0.22, 1, 0.36, 1)',
+        'pop-in': 'pop-in 360ms cubic-bezier(0.22, 1, 0.36, 1)',
+        ring: 'ring 1.4s ease-out 2',
+        destello: 'destello 1.6s ease-in forwards',
       },
     },
   },
