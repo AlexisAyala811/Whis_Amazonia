@@ -121,7 +121,7 @@ export function DashboardView(props: Props) {
       </div>
 
       {/* Indicadores */}
-      <section className="grid grid-cols-2 gap-3">
+      <section className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <Indicador
           titulo="Lotes activos"
           valor={String(kpi.lotes)}
@@ -199,7 +199,7 @@ export function DashboardView(props: Props) {
             </button>
           )}
         </div>
-        <div className="space-y-3">
+        <div className="space-y-3 md:grid md:grid-cols-2 md:gap-3 md:space-y-0">
           {atencion.length === 0 && (
             <div className="card p-6 text-center text-sm text-muted">
               No hay lotes activos. Toca <b className="text-ink">Registrar</b> para ingresar tu mercadería.
@@ -215,7 +215,7 @@ export function DashboardView(props: Props) {
             />
           ))}
           {urgentes.length > 3 && (
-            <button onClick={onVerLotes} className="btn-ghost w-full">
+            <button onClick={onVerLotes} className="btn-ghost w-full md:col-span-2">
               Ver los {urgentes.length} lotes urgentes <ChevronRight size={16} />
             </button>
           )}

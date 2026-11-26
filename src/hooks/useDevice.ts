@@ -17,6 +17,9 @@ export function useOnline(): boolean {
 
 export type Tema = 'dark' | 'light';
 
+/** Solo se guarda cuando la persona elige el tema; por defecto es el claro (crema) */
+const TEMA_KEY = 'whis-tema';
+
 export function useTheme(): [Tema, () => void] {
   const [tema, setTema] = useState<Tema>(() =>
     document.documentElement.classList.contains('dark') ? 'dark' : 'light',
@@ -25,7 +28,9 @@ export function useTheme(): [Tema, () => void] {
     document.documentElement.classList.toggle('dark', tema === 'dark');
     document.querySelector('meta[name="theme-color"]')?.setAttribute('content', tema === 'dark' ? '#0D0F12' : '#F4F1E8');
     try {
-      localStorage.setItem('whis-theme', tema);
+      localStorage.setItem(TEMA_KEY, tema);
+      // La versión anterior guardaba siempre "dark" (era el tema por defecto): se descarta
+      localStorage.removeItem('whis-theme');
     } catch {
       /* sin almacenamiento */
     }

@@ -138,8 +138,8 @@ export function BatchesView({ onAbrir, onSalida, onLiquidar }: Props) {
         </div>
       )}
 
-      <div className="space-y-3">
-        {visibles.length === 0 && <div className="card p-8 text-center text-sm text-muted">No hay lotes con este filtro.</div>}
+      <div className="space-y-3 md:grid md:grid-cols-2 md:gap-3 md:space-y-0">
+        {visibles.length === 0 && <div className="card p-8 text-center text-sm text-muted md:col-span-2">No hay lotes con este filtro.</div>}
         {visibles.map((l, i) => (
           <TarjetaLote
             key={l.id}

@@ -4,6 +4,7 @@ import { registerSW } from 'virtual:pwa-register';
 import App from './App';
 import { ToastProvider } from './components/ui/Toast';
 import { WhisStoreProvider } from './hooks/useWhisStore';
+import '@fontsource-variable/plus-jakarta-sans';
 import './index.css';
 
 registerSW({ immediate: true });
