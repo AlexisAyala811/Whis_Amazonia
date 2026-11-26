@@ -3,6 +3,7 @@ import type { Lote } from '../types';
 import {
   calcularFefo,
   clasificar,
+  conApagon,
   exposicionParaPorcentaje,
   formatoHoras,
   horasDesde,
@@ -97,22 +98,39 @@ describe('calcularFefo', () => {
     expect(r.horasRestantes).toBe(72);
   });
 
-  // Caso apagón: registrarApagon (useWhisStore) suma las horas del corte a
-  // horasExposicionCalor, pero esas mismas horas ya corren en el reloj desde
-  // fechaIngreso. El motor las cuenta como frío (×1) y además como calor (×factor).
+  // Caso apagón: las horas del corte ya corren en el reloj desde fechaIngreso,
+  // así que no deben contarse además como tiempo en frío.
   describe('apagón ocurrido después del ingreso', () => {
     // Pescado en cámara hace 10 h; de esas 10 h, 2 h fueron un apagón.
-    const conApagon = lote({ fechaIngreso: haceHoras(10), horasExposicionCalor: 2 });
+    const conCorte = conApagon(lote({ fechaIngreso: haceHoras(10) }), 2);
 
-    it('comportamiento actual: cuenta las 2 h dos veces (10 + 2 × 4 = 18 h)', () => {
-      expect(calcularFefo(conApagon, AHORA).horasEquivalentesConsumidas).toBeCloseTo(18);
+    it('conApagon suma las horas al calor y a las horas de apagón en cámara', () => {
+      expect(conCorte.horasExposicionCalor).toBe(2);
+      expect(conCorte.horasApagonEnCamara).toBe(2);
+      expect(conApagon(conCorte, 1.5).horasApagonEnCamara).toBe(3.5);
     });
 
-    // Lo correcto sería 8 h en frío + 2 h × 4 = 16 h consumidas.
-    // Marcado como `fails` mientras no se corrija: cuando se arregle, Vitest
-    // avisará y habrá que quitar el `.fails`.
-    it.fails('esperado: 8 h en frío + 2 h × 4 = 16 h consumidas', () => {
-      expect(calcularFefo(conApagon, AHORA).horasEquivalentesConsumidas).toBeCloseTo(16);
+    it('no cuenta las horas dos veces: 8 h en frío + 2 h × 4 = 16 h consumidas', () => {
+      const r = calcularFefo(conCorte, AHORA);
+      expect(r.horasEquivalentesConsumidas).toBeCloseTo(16);
+      expect(r.horasRestantes).toBeCloseTo(56);
+    });
+
+    it('respeta el calor de llegada y suma el apagón encima', () => {
+      // Sin frío +6h al llegar, luego apagón de 2 h: 8 h frío + (6 + 2) × 4 = 40 h
+      const l = conApagon(lote({ fechaIngreso: haceHoras(10), horasExposicionCalor: 6 }), 2);
+      expect(calcularFefo(l, AHORA).horasEquivalentesConsumidas).toBeCloseTo(40);
+    });
+
+    it('si el apagón es más largo que el tiempo en cámara, no resta más de lo transcurrido', () => {
+      // Lote ingresado hace 1 h con un apagón registrado de 3 h: 0 h frío + 3 × 4 = 12 h
+      const l = conApagon(lote({ fechaIngreso: haceHoras(1) }), 3);
+      expect(calcularFefo(l, AHORA).horasEquivalentesConsumidas).toBeCloseTo(12);
+    });
+
+    it('lotes guardados antes del cambio (sin el campo) se calculan igual que antes', () => {
+      const viejo = lote({ fechaIngreso: haceHoras(10), horasExposicionCalor: 2 });
+      expect(calcularFefo(viejo, AHORA).horasEquivalentesConsumidas).toBeCloseTo(18);
     });
   });
 
@@ -179,13 +197,13 @@ describe('formateadores', () => {
     expect(formatoHoras(h)).toBe(texto);
   });
 
-  // Error de redondeo: 1.995 h muestra "1 h 60 min" en vez de "2 h 00 min",
-  // y 71.6 h muestra "2 d 24 h" en vez de "3 d 0 h".
-  it.fails('formatoHoras no muestra "60 min" al redondear', () => {
-    expect(formatoHoras(1.995)).toBe('2 h 00 min');
-  });
-  it.fails('formatoHoras no muestra "24 h" al redondear días', () => {
-    expect(formatoHoras(71.6)).toBe('3 d 0 h');
+  it.each([
+    [0.999, '1 h 00 min'],
+    [1.995, '2 h 00 min'],
+    [47.999, '2 d 0 h'],
+    [71.6, '3 d 0 h'],
+  ])('formatoHoras(%d) no muestra "60 min" ni "24 h" al redondear → %s', (h, texto) => {
+    expect(formatoHoras(h)).toBe(texto);
   });
 
   it('soles y kg', () => {

@@ -13,7 +13,7 @@ import type {
   MotivoBaja,
   Semaforo,
 } from '../types';
-import { calcularFefo, ordenarFefo, uid, type LoteFefo } from '../utils/fefoEngine';
+import { calcularFefo, conApagon, ordenarFefo, uid, type LoteFefo } from '../utils/fefoEngine';
 
 const STORAGE_KEY = 'whis-amazonia:data';
 
@@ -150,7 +150,7 @@ export function WhisStoreProvider({ children }: { children: ReactNode }) {
       let pasaronARojo = 0;
       for (const l of afectados) {
         const antes = calcularFefo(l, t).semaforo;
-        const despues = calcularFefo({ ...l, horasExposicionCalor: l.horasExposicionCalor + horas }, t).semaforo;
+        const despues = calcularFefo(conApagon(l, horas), t).semaforo;
         if (rango[despues] > rango[antes]) {
           if (despues === 'rojo') pasaronARojo++;
           else pasaronAAmarillo++;
@@ -169,7 +169,7 @@ export function WhisStoreProvider({ children }: { children: ReactNode }) {
       setData((d) => ({
         ...d,
         lotes: d.lotes.map((l) =>
-          ids.has(l.id) ? { ...l, horasExposicionCalor: +(l.horasExposicionCalor + horas).toFixed(2) } : l,
+          ids.has(l.id) ? conApagon(l, horas) : l,
         ),
         eventos: [evento, ...d.eventos],
       }));
