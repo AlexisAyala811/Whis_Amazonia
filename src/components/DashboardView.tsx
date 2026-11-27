@@ -5,6 +5,7 @@ import {
   BarChart3,
   Boxes,
   ChevronRight,
+  ClipboardCheck,
   CircleCheck,
   HardDriveDownload,
   Hourglass,
@@ -35,6 +36,7 @@ interface Props {
   onRegistrar: () => void;
   onRemates: () => void;
   onAlertas: () => void;
+  onCierre: () => void;
 }
 
 const SEMANA_MS = 7 * 24 * 3_600_000;
@@ -46,7 +48,7 @@ const ejeSoles = (v: number): string =>
 const ICONO_CAMARA: Record<CamaraId, typeof Snowflake> = { camara1: Snowflake, camara2: Snowflake, almacen: Sun };
 
 export function DashboardView(props: Props) {
-  const { online, onAbrir, onSalida, onLiquidar, onVerLotes, onProgreso, onRegistrar, onRemates, onAlertas } = props;
+  const { online, onAbrir, onSalida, onLiquidar, onVerLotes, onProgreso, onRegistrar, onRemates, onAlertas, onCierre } = props;
   const { data, activos, ahora } = useWhisStore();
 
   const kpi = useMemo(() => {
@@ -174,6 +176,9 @@ export function DashboardView(props: Props) {
           <button className="chip" onClick={onRemates}>
             <Zap size={17} className="text-danger" /> Remate
           </button>
+          <button className="chip" onClick={onCierre}>
+            <ClipboardCheck size={17} /> Cierre del día
+          </button>
           <button className="chip" onClick={onAlertas}>
             <Snowflake size={17} /> Apagón
           </button>
@@ -182,6 +187,26 @@ export function DashboardView(props: Props) {
 
       {/* Gamificación: meta, racha y logros */}
       <MetaDelDiaCard onAbrir={onProgreso} />
+
+      {/* Cierre del día */}
+      <button
+        type="button"
+        onClick={onCierre}
+        className="card flex w-full items-center gap-3 p-3.5 text-left transition-all duration-200 ease-out active:scale-[0.99]"
+      >
+        <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-brand/10 text-brand">
+          <ClipboardCheck size={20} />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block text-sm font-bold">Cierre del día</span>
+          <span className="block truncate text-xs text-muted">
+            {kpi.hoy.operaciones > 0 || kpi.hoy.merma > 0
+              ? `${solesCorto(kpi.hoy.ventas)} vendidos hoy · envíalo`
+              : 'Ventas, merma y meta, listo para WhatsApp'}
+          </span>
+        </span>
+        <ChevronRight size={18} className="shrink-0 text-muted" />
+      </button>
 
       {/* Atención hoy */}
       <section>
