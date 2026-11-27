@@ -1,5 +1,5 @@
-import { useState, type ReactNode } from 'react';
-import { ArrowRight, FlaskConical, MessageCircle, Store, ThermometerSnowflake, WifiOff } from 'lucide-react';
+import type { ReactNode } from 'react';
+import { ArrowRight, MessageCircle, Store, ThermometerSnowflake, WifiOff } from 'lucide-react';
 import { useWhisStore } from '../hooks/useWhisStore';
 import { FOTOS_REALES } from '../utils/fotosReales';
 
@@ -33,22 +33,20 @@ interface Props {
   onEntrar: () => void;
 }
 
-/** Portada de entrada: marca Whis y elección entre la demo o los datos propios. */
+/** Portada de entrada: marca Whis y acceso al puesto con datos propios. */
 export function Bienvenida({ open, onEntrar }: Props) {
-  const { primeraVez, data, empezarVacio, cargarDemo } = useWhisStore();
-  const [confirmarDemo, setConfirmarDemo] = useState(false);
+  const { primeraVez, data, empezarVacio } = useWhisStore();
   if (!open && !primeraVez) return null;
 
+  // La portada solo ofrece entrar con datos propios (la demo sigue en Ajustes)
   const enDemo = data.modo === 'demo';
-  const hayDatosReales = !enDemo && data.lotes.length + data.compradores.length + data.liquidaciones.length > 0;
+  const nuevo = primeraVez || enDemo;
 
   const entrar = (accion?: () => void) => {
     accion?.();
     marcarEntradaVista();
-    setConfirmarDemo(false);
     onEntrar();
   };
-  const verDemo = () => (hayDatosReales && !primeraVez ? setConfirmarDemo(true) : entrar(cargarDemo));
 
   return (
     <div className="fixed inset-0 z-[60] overflow-y-auto bg-canvas" role="dialog" aria-modal="true" aria-label="Bienvenida a Whis Amazonia">
@@ -91,63 +89,34 @@ export function Bienvenida({ open, onEntrar }: Props) {
         {/* Opciones de entrada */}
         <section className="animate-fade-in space-y-3 md:w-[360px] md:shrink-0">
           <div>
-            <h2 className="text-xl font-extrabold">{primeraVez ? '¿Cómo quieres empezar?' : 'Bienvenido de vuelta'}</h2>
+            <h2 className="text-xl font-extrabold">{nuevo ? 'Empieza con tu puesto' : 'Bienvenido de vuelta'}</h2>
             <p className="mt-1 text-sm text-muted">
-              {primeraVez
-                ? 'Prueba la demo con datos de ejemplo o empieza con tu propio puesto.'
-                : enDemo
-                  ? 'Estás usando la demo con datos de ejemplo.'
-                  : `Tus datos: ${data.lotes.length} lotes y ${data.compradores.length} compradores en este equipo.`}
+              {nuevo
+                ? 'Registra tus lotes y compradores reales.'
+                : `Tus datos: ${data.lotes.length} lotes y ${data.compradores.length} compradores en este equipo.`}
             </p>
           </div>
 
-          {confirmarDemo ? (
-            <div className="card animate-fade-in space-y-3 border border-danger/30 p-4">
-              <p className="text-sm">
-                Para ver la demo se borrarán tus datos de este equipo. Exporta un respaldo desde Ajustes si no lo hiciste.
-              </p>
-              <div className="grid grid-cols-2 gap-2">
-                <button className="btn-ghost" onClick={() => setConfirmarDemo(false)}>
-                  Cancelar
-                </button>
-                <button className="btn-danger" onClick={() => entrar(cargarDemo)}>
-                  Ver la demo
-                </button>
-              </div>
-            </div>
+          {nuevo ? (
+            <OpcionEntrada
+              principal
+              icono={<Store size={22} />}
+              titulo="Empezar con mis datos"
+              detalle="Empieza vacío: registra tus lotes y compradores reales"
+              onClick={() => entrar(empezarVacio)}
+            />
           ) : (
-            <>
-              {!primeraVez && (
-                <OpcionEntrada
-                  principal
-                  icono={<ArrowRight size={22} />}
-                  titulo={enDemo ? 'Seguir en la demo' : 'Entrar a mi puesto'}
-                  detalle={enDemo ? 'Continúa donde la dejaste' : 'Continúa con tus lotes y ventas'}
-                  onClick={() => entrar()}
-                />
-              )}
-              {(primeraVez || !enDemo) && (
-                <OpcionEntrada
-                  principal={primeraVez}
-                  icono={<FlaskConical size={22} />}
-                  titulo="Ver la demo"
-                  detalle="Lotes, apagones y compradores de ejemplo (teléfonos ficticios)"
-                  onClick={verDemo}
-                />
-              )}
-              {(primeraVez || enDemo) && (
-                <OpcionEntrada
-                  icono={<Store size={22} />}
-                  titulo="Empezar con mis datos"
-                  detalle={primeraVez ? 'Empieza vacío: registra tus lotes y compradores reales' : 'Deja la demo y empieza vacío con tu puesto'}
-                  onClick={() => entrar(empezarVacio)}
-                />
-              )}
-            </>
+            <OpcionEntrada
+              principal
+              icono={<ArrowRight size={22} />}
+              titulo="Entrar a mi puesto"
+              detalle="Continúa con tus lotes y ventas"
+              onClick={() => entrar()}
+            />
           )}
 
           <p className="pt-1 text-center text-[11px] text-muted">
-            Tus datos se guardan solo en este equipo. Vuelve a esta pantalla desde Ajustes.
+            Tus datos se guardan solo en este equipo.
           </p>
         </section>
       </div>
