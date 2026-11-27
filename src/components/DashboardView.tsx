@@ -160,6 +160,7 @@ export function DashboardView(props: Props) {
           }
           icono={<Wallet size={16} />}
           tono="bg-brand/10 text-brand"
+          onClick={onCierre}
         />
       </section>
 

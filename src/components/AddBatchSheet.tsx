@@ -74,6 +74,8 @@ export function AddBatchSheet({ open, onClose }: Props) {
   const [camaraId, setCamaraId] = useState<CamaraId | null>(null);
   const [peso, setPeso] = useState('');
   const [costo, setCosto] = useState('');
+  /** Precio de venta por kg; vacío = el sugerido según el costo */
+  const [venta, setVenta] = useState('');
   const [condicion, setCondicion] = useState<CondicionLlegada>('optimo');
   const [horasExtra, setHorasExtra] = useState(0);
   const [empaque, setEmpaque] = useState<Empaque>('kg');
@@ -94,6 +96,7 @@ export function AddBatchSheet({ open, onClose }: Props) {
       setCamaraId(null);
       setPeso('');
       setCosto('');
+      setVenta('');
       setCondicion('optimo');
       setHorasExtra(0);
       setEmpaque('kg');
@@ -205,9 +208,27 @@ export function AddBatchSheet({ open, onClose }: Props) {
   // Con envases, el peso sale de cantidad × peso promedio (cálculo en vivo)
   const pesoNum = empaque === 'kg' ? Number(peso) : +(envases * (Number(kgEnvase) || 0)).toFixed(2);
   const costoNum = Number(costo);
-  const valido = !!productoId && !!camaraId && pesoNum > 0 && costoNum > 0 && codigo.trim().length > 0;
-
-  const precioVenta = +(costoNum * MARGEN_VENTA).toFixed(1);
+  const codigoLimpio = codigo.trim().toUpperCase();
+  const codigoRepetido = codigoLimpio.length > 0 && data.lotes.some((l) => l.estado === 'activo' && l.codigoQR === codigoLimpio);
+  const ventaSugerida = +(costoNum * MARGEN_VENTA).toFixed(1);
+  const precioVenta = venta.trim() !== '' && Number(venta) > 0 ? +Number(venta).toFixed(2) : ventaSugerida;
+  const ventaBajoCosto = costoNum > 0 && precioVenta > 0 && precioVenta < costoNum;
+  const valido =
+    !!productoId && !!camaraId && pesoNum > 0 && costoNum > 0 && precioVenta > 0 && codigoLimpio.length > 0 && !codigoRepetido;
+  /** Lo primero que falta, para decirlo en el botón de guardar */
+  const falta = !productoId
+    ? 'Elige el producto'
+    : !(pesoNum > 0)
+      ? 'Indica el peso'
+      : !(costoNum > 0)
+        ? 'Indica el costo por kg'
+        : !camaraId
+          ? 'Elige la ubicación'
+          : codigoLimpio.length === 0
+            ? 'Escribe el código del lote'
+            : codigoRepetido
+              ? `El lote ${codigoLimpio} ya existe`
+              : null;
   const exposicion = (CONDICIONES.find((c) => c.id === condicion)?.horas ?? 0) + horasExtra;
   const vista =
     productoId && valido
@@ -233,6 +254,7 @@ export function AddBatchSheet({ open, onClose }: Props) {
     setProductoId(ultimo.productoId);
     setCamaraId(ultimo.camaraId);
     setCosto(String(ultimo.costoKg));
+    setVenta(String(ultimo.precioVentaKg));
     setCondicion('optimo');
     setHorasExtra(0);
     if (ultimo.envase) {
@@ -257,7 +279,7 @@ export function AddBatchSheet({ open, onClose }: Props) {
   const guardar = () => {
     if (!valido || !productoId || !camaraId) return;
     const lote = agregarLote({
-      codigoQR: codigo.trim().toUpperCase(),
+      codigoQR: codigoLimpio,
       productoId,
       camaraId,
       pesoKg: pesoNum,
@@ -279,7 +301,7 @@ export function AddBatchSheet({ open, onClose }: Props) {
       subtitle="Cada ingreso crea un lote propio, trazable por FEFO"
       footer={
         <button className="btn-primary w-full py-3 text-base" disabled={!valido} onClick={guardar}>
-          <PackagePlus size={20} /> Guardar lote {codigo && `#${codigo.toUpperCase()}`}
+          <PackagePlus size={20} /> {falta ?? `Guardar lote #${codigoLimpio}`}
         </button>
       }
     >
@@ -292,11 +314,21 @@ export function AddBatchSheet({ open, onClose }: Props) {
             <input
               className="w-20 bg-transparent font-mono text-sm font-bold uppercase outline-none"
               value={codigo}
+              maxLength={20}
               onChange={(e) => setCodigo(e.target.value)}
               aria-label="Código del lote"
+              aria-invalid={codigoRepetido}
             />
           </label>
         </div>
+        {codigoRepetido && (
+          <p className="-mt-3 text-right text-xs text-danger" role="alert">
+            Ya hay un lote activo con el código {codigoLimpio}.{' '}
+            <button type="button" className="font-semibold underline" onClick={() => setCodigo(siguienteCodigo())}>
+              Usar {siguienteCodigo()}
+            </button>
+          </p>
+        )}
 
         {ultimo && (
           <button
@@ -316,7 +348,7 @@ export function AddBatchSheet({ open, onClose }: Props) {
         )}
 
         {/* QR y voz */}
-        <QrScanner onResultado={onQr} onSimular={simularQr} codigoSimulado={siguienteCodigo()} />
+        <QrScanner onResultado={onQr} onSimular={data.modo === 'demo' ? simularQr : undefined} codigoSimulado={siguienteCodigo()} />
         <div className={`rounded-3xl border p-3 transition-all duration-200 ${escuchando ? 'border-brand bg-brand/10' : 'border-line bg-surface2/40'}`}>
           <div className="flex items-center gap-3">
             <button
@@ -501,6 +533,32 @@ export function AddBatchSheet({ open, onClose }: Props) {
               />
             </span>
           </label>
+          <label className="mt-2 flex items-center justify-between gap-3 rounded-2xl bg-surface2/60 px-3 py-2">
+            <span className="min-w-0">
+              <span className="block text-sm font-semibold">Precio de venta por kg</span>
+              <span className={`block text-[11px] ${ventaBajoCosto ? 'text-danger' : 'text-muted'}`}>
+                {ventaBajoCosto
+                  ? 'Está por debajo del costo'
+                  : costoNum > 0
+                    ? `Sugerido ${soles(ventaSugerida)} (costo + 35 %)`
+                    : 'Se sugiere al poner el costo'}
+              </span>
+            </span>
+            <span className="flex shrink-0 items-center gap-1.5">
+              <span className="text-sm text-muted">S/</span>
+              <input
+                className="field w-24 bg-surface px-2 text-center font-bold"
+                type="number"
+                inputMode="decimal"
+                min={0}
+                step={0.1}
+                placeholder={costoNum > 0 ? String(ventaSugerida) : '0.00'}
+                value={venta}
+                onChange={(e) => setVenta(e.target.value)}
+                aria-label="Precio de venta por kilo"
+              />
+            </span>
+          </label>
 
           <div className="mt-3 rounded-3xl bg-brand p-4 text-white dark:text-[#0E1511]">
             <div className="flex items-center justify-between">
@@ -516,7 +574,7 @@ export function AddBatchSheet({ open, onClose }: Props) {
             <div className="mt-2 flex justify-between gap-2 border-t border-white/20 pt-2 text-xs">
               <span className="opacity-90">Costo de compra</span>
               <b className="tabular-nums">
-                {soles(pesoNum * costoNum)} {costoNum > 0 && <span className="font-normal opacity-80">· venta sugerida {soles(precioVenta)}/kg</span>}
+                {soles(pesoNum * costoNum)} {costoNum > 0 && <span className="font-normal opacity-80">· venta {soles(precioVenta)}/kg</span>}
               </b>
             </div>
           </div>

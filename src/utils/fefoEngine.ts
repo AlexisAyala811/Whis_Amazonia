@@ -121,7 +121,7 @@ export const SEMAFORO_INFO: Record<Semaforo, { etiqueta: string; accion: string;
   },
   rojo: {
     etiqueta: 'Crítico',
-    accion: 'Liquidar ya',
+    accion: 'Rematar ya',
     texto: 'text-danger',
     fondo: 'bg-danger/15',
     barra: 'bg-danger',

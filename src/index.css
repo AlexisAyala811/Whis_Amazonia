@@ -10,11 +10,11 @@
   --surface2: 238 234 222;
   --line: 228 222 207;
   --ink: 27 36 29;
-  --muted: 107 112 101;
+  --muted: 96 101 90;
   --brand: 21 87 46;
-  --ok: 30 132 66;
-  --warn: 201 112 12;
-  --danger: 196 52 40;
+  --ok: 24 116 56;
+  --warn: 156 82 4;
+  --danger: 180 46 36;
   --glass: 255 255 255;
   --scroll: 0 0 0;
   color-scheme: light;
@@ -61,6 +61,27 @@
   }
   input[type='number'] {
     -moz-appearance: textfield;
+  }
+  /* Foco visible al navegar con teclado (no aparece al tocar) */
+  :focus-visible {
+    outline: 2px solid rgb(var(--brand));
+    outline-offset: 2px;
+  }
+  .field:focus-visible,
+  [role='dialog']:focus-visible {
+    outline: none;
+  }
+}
+
+/* Menos movimiento para quien lo pidió en su sistema */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }
 

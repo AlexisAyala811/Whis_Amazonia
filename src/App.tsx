@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Bell, Home, Leaf, Moon, Package, Plus, Sun, UserRound, Zap } from 'lucide-react';
+import { AlertTriangle, Bell, Home, Leaf, Moon, Package, Plus, Sun, UserRound, Zap } from 'lucide-react';
 import { AddBatchSheet } from './components/AddBatchSheet';
 import { Bienvenida, debeMostrarEntrada } from './components/Bienvenida';
 import { BatchesView } from './components/BatchesView';
@@ -35,7 +35,7 @@ export default function App() {
   const online = useOnline();
   const [tema, toggleTema] = useTheme();
   useEspacioInsignia();
-  const { activos, data, primeraVez, recuperacion } = useWhisStore();
+  const { activos, data, primeraVez, recuperacion, guardadoOk } = useWhisStore();
   const toast = useToast();
   const [vista, setVista] = useState<Vista>('inicio');
   const [nuevoLote, setNuevoLote] = useState(false);
@@ -102,7 +102,13 @@ export default function App() {
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-1.5">
               <img src={`${import.meta.env.BASE_URL}logo-whis.png`} alt="Whis" className="h-[18px] w-auto dark:invert" />
-              <span className="pill bg-ok/15 px-2 py-0.5 text-[10px] uppercase tracking-wide text-ok">Amazonia</span>
+              <span
+                className={`pill bg-ok/15 px-2 py-0.5 text-[10px] uppercase tracking-wide text-ok ${
+                  data.modo === 'demo' && !primeraVez ? 'max-[389px]:hidden' : ''
+                }`}
+              >
+                Amazonia
+              </span>
               {data.modo === 'demo' && !primeraVez && (
                 <button onClick={() => setAjustes(true)} className="pill bg-warn/15 px-2 py-0.5 text-[10px] uppercase text-warn" title="Estás viendo datos de ejemplo">
                   Demo
@@ -130,6 +136,20 @@ export default function App() {
       </header>
 
       <main key={vista} className="animate-fade-in px-4 pb-[calc(8rem+var(--insignia,0px))] pt-4 md:px-6">
+        {!guardadoOk && (
+          <div role="alert" className="mb-4 flex items-start gap-3 rounded-3xl border border-danger/30 bg-danger/10 p-3.5">
+            <AlertTriangle size={18} className="mt-0.5 shrink-0 text-danger" />
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-bold text-danger">No se pudo guardar el último cambio</p>
+              <p className="text-xs text-muted">
+                El almacenamiento del celular está lleno. Exporta un respaldo JSON y libera espacio para no perder datos.
+              </p>
+            </div>
+            <button onClick={() => setAjustes(true)} className="min-h-[44px] shrink-0 text-sm font-semibold text-danger underline">
+              Ajustes
+            </button>
+          </div>
+        )}
         {vista === 'inicio' && (
           <DashboardView
             online={online}
@@ -144,7 +164,7 @@ export default function App() {
             onCierre={() => setCierre(true)}
           />
         )}
-        {vista === 'lotes' && <BatchesView onAbrir={abrirLote} onSalida={(l) => setSalidaId(l.id)} onLiquidar={liquidarLote} />}
+        {vista === 'lotes' && <BatchesView onRegistrar={() => setNuevoLote(true)} onAbrir={abrirLote} onSalida={(l) => setSalidaId(l.id)} onLiquidar={liquidarLote} />}
         {vista === 'frio' && <ColdChainView />}
         {vista === 'liquidar' && <LiquidationView preseleccion={preLiquidar} limpiarPreseleccion={limpiarPre} />}
       </main>

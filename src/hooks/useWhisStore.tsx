@@ -196,6 +196,7 @@ export function WhisStoreProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const despachar = useCallback((loteId: string, pesoKg: number, opciones: OpcionesSalida = {}) => {
+    if (!(pesoKg > 0)) return;
     recordar('Venta registrada');
     setData((d) => {
       const lote = d.lotes.find((l) => l.id === loteId);
@@ -224,11 +225,13 @@ export function WhisStoreProvider({ children }: { children: ReactNode }) {
         ],
       };
     });
+    setAhora(Date.now());
   }, []);
 
   const registrarApagon = useCallback(
     (camaraIds: CamaraId[], horas: number, nota?: string): ResultadoApagon => {
       const t = Date.now();
+      if (!(horas > 0) || camaraIds.length === 0) return { lotesAfectados: 0, pasaronAAmarillo: 0, pasaronARojo: 0 };
       const afectados = data.lotes.filter(
         (l) => l.estado === 'activo' && l.pesoKg > 0 && camaraIds.includes(l.camaraId),
       );
@@ -267,6 +270,7 @@ export function WhisStoreProvider({ children }: { children: ReactNode }) {
   );
 
   const darDeBaja = useCallback((loteId: string, motivo: MotivoBaja, pesoKg: number, fotoEvidencia: string) => {
+    if (!(pesoKg > 0)) return;
     recordar('Baja registrada');
     setData((d) => {
       const lote = d.lotes.find((l) => l.id === loteId);
@@ -281,7 +285,7 @@ export function WhisStoreProvider({ children }: { children: ReactNode }) {
         fecha: new Date().toISOString(),
         motivo,
         pesoKg: kgReal,
-        valorPerdido: kgReal * lote.costoKg,
+        valorPerdido: +(kgReal * lote.costoKg).toFixed(2),
         fotoEvidencia,
       };
       return {
@@ -294,12 +298,13 @@ export function WhisStoreProvider({ children }: { children: ReactNode }) {
         bajas: [baja, ...d.bajas],
       };
     });
+    setAhora(Date.now());
   }, []);
 
   const liquidar = useCallback(
     (loteId: string, descuentoPct: number, compradorId: string): Liquidacion | null => {
       const lote = data.lotes.find((l) => l.id === loteId);
-      if (!lote) return null;
+      if (!lote || lote.estado !== 'activo' || !(lote.pesoKg > 0)) return null;
       const precioRemateKg = +(lote.precioVentaKg * (1 - descuentoPct / 100)).toFixed(2);
       const liq: Liquidacion = {
         id: uid('liq'),
@@ -314,7 +319,7 @@ export function WhisStoreProvider({ children }: { children: ReactNode }) {
         total: +(lote.pesoKg * precioRemateKg).toFixed(2),
         compradorId,
       };
-      recordar(`Lote ${lote.codigoQR} liquidado`);
+      recordar(`Lote ${lote.codigoQR} rematado`);
       setData((d) => ({
         ...d,
         lotes: actualizarLote(d.lotes, loteId, (l) => ({ ...l, pesoKg: 0, estado: 'liquidado' })),

@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { AlertCircle, Boxes, Eye, PackageOpen, Search, ShoppingBasket, SlidersHorizontal, Warehouse, Zap } from 'lucide-react';
-import { CAMARAS, getCamara, getProducto } from '../data/catalog';
+import { CAMARAS, getCamara, getProducto, normalizarTexto } from '../data/catalog';
 import { useWhisStore } from '../hooks/useWhisStore';
 import { SEMAFORO_INFO, formatoHoras, kg, soles, type LoteFefo } from '../utils/fefoEngine';
 import { envasesDisponibles, haceDias, nombreEnvase, porcentajeSalido } from '../utils/puesto';
@@ -25,12 +25,13 @@ const pasa = (f: Filtro, l: LoteFefo) =>
 const BORDE = { verde: 'border-l-ok', amarillo: 'border-l-warn', rojo: 'border-l-danger' } as const;
 
 interface Props {
+  onRegistrar: () => void;
   onAbrir: (l: LoteFefo) => void;
   onSalida: (l: LoteFefo) => void;
   onLiquidar: (l: LoteFefo) => void;
 }
 
-export function BatchesView({ onAbrir, onSalida, onLiquidar }: Props) {
+export function BatchesView({ onRegistrar, onAbrir, onSalida, onLiquidar }: Props) {
   const { activos, ahora } = useWhisStore();
   const [filtro, setFiltro] = useState<Filtro>('todos');
   const [camara, setCamara] = useState<string>('todas');
@@ -52,10 +53,14 @@ export function BatchesView({ onAbrir, onSalida, onLiquidar }: Props) {
     [activos, camara],
   );
   const visibles = useMemo(() => {
-    const t = q.trim().toLowerCase();
+    const t = normalizarTexto(q.trim());
     return porCamara
       .filter((l) => pasa(filtro, l))
-      .filter((l) => !t || `${l.codigoQR} ${getProducto(l.productoId).nombre}`.toLowerCase().includes(t));
+      .filter((l) => {
+        if (!t) return true;
+        const p = getProducto(l.productoId);
+        return normalizarTexto(`${l.codigoQR} ${p.nombre} ${p.nombreCorto}`).includes(t);
+      });
   }, [porCamara, filtro, q]);
 
   const kgTotal = porCamara.reduce((s, l) => s + l.pesoKg, 0);
@@ -139,7 +144,30 @@ export function BatchesView({ onAbrir, onSalida, onLiquidar }: Props) {
       )}
 
       <div className="space-y-3 md:grid md:grid-cols-2 md:gap-3 md:space-y-0">
-        {visibles.length === 0 && <div className="card p-8 text-center text-sm text-muted md:col-span-2">No hay lotes con este filtro.</div>}
+        {visibles.length === 0 &&
+          (activos.length === 0 ? (
+            <div className="card flex flex-col items-center gap-3 p-8 text-center md:col-span-2">
+              <PackageOpen size={28} className="text-muted" />
+              <p className="text-sm text-muted">Aún no tienes mercadería registrada. Cada ingreso se vuelve un lote con su semáforo.</p>
+              <button className="btn-primary" onClick={onRegistrar}>
+                Registrar mi primer lote
+              </button>
+            </div>
+          ) : (
+            <div className="card flex flex-col items-center gap-2 p-8 text-center text-sm text-muted md:col-span-2">
+              No hay lotes {q.trim() ? `que coincidan con “${q.trim()}”` : 'con este filtro'}.
+              <button
+                className="min-h-[44px] font-semibold text-brand"
+                onClick={() => {
+                  setQ('');
+                  setFiltro('todos');
+                  setCamara('todas');
+                }}
+              >
+                Ver todos los lotes
+              </button>
+            </div>
+          ))}
         {visibles.map((l, i) => (
           <TarjetaLote
             key={l.id}
