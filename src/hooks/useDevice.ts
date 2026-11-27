@@ -38,3 +38,31 @@ export function useTheme(): [Tema, () => void] {
   const toggle = useCallback(() => setTema((t) => (t === 'dark' ? 'light' : 'dark')), []);
   return [tema, toggle];
 }
+
+/**
+ * Netlify (plan gratuito) agrega una insignia "Powered by Netlify" fija abajo a la
+ * derecha. No se oculta: se deja espacio libre debajo de la barra inferior para que
+ * no tape los botones. Expone la altura en la variable CSS --insignia.
+ */
+export function useEspacioInsignia(): void {
+  useEffect(() => {
+    const raiz = document.documentElement;
+    const medir = () => {
+      const f = document.getElementById('nl-badge-frame');
+      const r = f?.getBoundingClientRect();
+      const alto = r && r.height > 0 && r.bottom >= window.innerHeight - 4 ? Math.ceil(r.height) : 0;
+      raiz.style.setProperty('--insignia', `${alto}px`);
+    };
+    medir();
+    const obs = new MutationObserver(medir);
+    obs.observe(document.body, { childList: true });
+    window.addEventListener('resize', medir);
+    const t = window.setInterval(medir, 2000);
+    window.setTimeout(() => window.clearInterval(t), 20000);
+    return () => {
+      obs.disconnect();
+      window.removeEventListener('resize', medir);
+      window.clearInterval(t);
+    };
+  }, []);
+}

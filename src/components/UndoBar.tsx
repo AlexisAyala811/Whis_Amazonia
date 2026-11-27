@@ -19,7 +19,7 @@ export function UndoBar() {
   if (!deshacer) return null;
 
   return (
-    <div className="pointer-events-none fixed inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+92px)] z-[45] mx-auto max-w-md px-4">
+    <div className="pointer-events-none fixed inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+92px+var(--insignia,0px))] z-[45] mx-auto max-w-md px-4">
       <div
         key={deshacer.id}
         role="status"
