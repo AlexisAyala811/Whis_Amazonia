@@ -116,7 +116,7 @@ export function ModernSelect<T extends string>({
                   </span>
                   {o.badge}
                   <span
-                    className={`grid h-6 w-6 shrink-0 place-items-center rounded-full bg-brand text-white transition-all duration-200 dark:text-[#0D0F12] ${
+                    className={`grid h-6 w-6 shrink-0 place-items-center rounded-full bg-brand text-white transition-all duration-200 dark:text-[#0E1511] ${
                       sel ? 'scale-100 opacity-100' : 'scale-50 opacity-0'
                     }`}
                   >

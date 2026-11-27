@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from 'react';
 import { ArrowRight, FlaskConical, Leaf, MessageCircle, Store, ThermometerSnowflake, WifiOff } from 'lucide-react';
 import { useWhisStore } from '../hooks/useWhisStore';
+import { FOTOS_REALES } from '../utils/fotosReales';
 
 const ENTRADA_KEY = 'whis-entrada-vista';
 
@@ -53,7 +54,7 @@ export function Bienvenida({ open, onEntrar }: Props) {
     <div className="fixed inset-0 z-[60] overflow-y-auto bg-canvas" role="dialog" aria-modal="true" aria-label="Bienvenida a Whis Amazonia">
       <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col gap-5 px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-[max(1.5rem,env(safe-area-inset-top))] md:max-w-4xl md:flex-row md:items-center md:gap-8 md:px-8">
         {/* Portada de marca */}
-        <section className="relative animate-fade-in overflow-hidden rounded-[2rem] bg-brand p-6 text-white md:flex-1 md:p-8 dark:text-[#0D0F12]">
+        <section className="relative animate-fade-in overflow-hidden rounded-[2rem] bg-brand p-6 text-white md:flex-1 md:p-8 dark:text-[#0E1511]">
           <div className="pointer-events-none absolute -right-10 -top-10 h-44 w-44 rounded-full bg-white/10" />
           <div className="pointer-events-none absolute -bottom-16 -left-8 h-40 w-40 rounded-full bg-white/10" />
           <div className="relative flex items-center gap-2.5">
@@ -71,11 +72,14 @@ export function Bienvenida({ open, onEntrar }: Props) {
           <p className="relative mt-2 text-sm opacity-85">
             Control de lotes perecibles para tu puesto: camu camu, aguaje, cocona, plátano y más.
           </p>
-          <div className="relative mt-5 flex gap-2 text-[28px]" aria-hidden="true">
-            {['🍒', '🥥', '🍅', '🍌', '🐟'].map((e) => (
-              <span key={e} className="grid h-12 w-12 place-items-center rounded-2xl bg-white/90 shadow-sm">
-                {e}
-              </span>
+          <div className="relative mt-5 flex gap-2" aria-hidden="true">
+            {FOTOS_REALES.map((f) => (
+              <img
+                key={f.clave}
+                src={`${import.meta.env.BASE_URL}productos/${f.archivo}`}
+                alt=""
+                className="h-12 w-12 rounded-2xl object-cover shadow-sm ring-2 ring-white/70 md:h-14 md:w-14"
+              />
             ))}
           </div>
           <ul className="relative mt-5 space-y-2.5">
@@ -177,7 +181,7 @@ function OpcionEntrada({
       onClick={onClick}
       className={`flex w-full items-center gap-3 rounded-3xl p-4 text-left transition-all duration-200 active:scale-[0.98] ${
         principal
-          ? 'bg-brand text-white shadow-[0_12px_28px_-14px_rgb(var(--brand)/0.9)] dark:text-[#0D0F12]'
+          ? 'bg-brand text-white shadow-[0_12px_28px_-14px_rgb(var(--brand)/0.9)] dark:text-[#0E1511]'
           : 'card border border-line hover:border-brand/40'
       }`}
     >

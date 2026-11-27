@@ -14,6 +14,7 @@ import {
   Trash2,
 } from 'lucide-react';
 import { useWhisStore } from '../hooks/useWhisStore';
+import { FOTOS_REALES } from '../utils/fotosReales';
 import type { Tema } from '../hooks/useDevice';
 import type { AppData } from '../types';
 import { descargarTexto, exportarCSV, exportarJSON } from '../utils/exportar';
@@ -140,7 +141,7 @@ export function SettingsSheet({ open, onClose, tema, toggleTema, onProductos, on
         />
 
         <Fila icono={<span className={icono}>{tema === 'dark' ? <Sun size={18} /> : <Moon size={18} />}</span>} clase={fila} onClick={toggleTema}
-          titulo={`Tema ${tema === 'dark' ? 'claro (Warm Cream)' : 'oscuro (Obsidian)'}`} detalle="Cambiar apariencia" />
+          titulo={tema === 'dark' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'} detalle={tema === 'dark' ? 'Crema con verde (predeterminado)' : 'Verde selva de noche, descansa la vista'} />
 
         <Fila
           clase={fila}
@@ -227,6 +228,21 @@ export function SettingsSheet({ open, onClose, tema, toggleTema, onProductos, on
             </div>
           )}
         </div>
+
+        <details className="mt-3 rounded-2xl bg-surface2/60 px-3 py-2 text-xs text-muted">
+          <summary className="cursor-pointer py-1 font-semibold text-ink">Créditos de las fotos</summary>
+          <ul className="mt-1 space-y-1 pb-1">
+            {FOTOS_REALES.map((f) => (
+              <li key={f.clave}>
+                {f.titulo}: foto de{' '}
+                <a href={f.fuente} target="_blank" rel="noreferrer" className="font-semibold text-brand underline">
+                  {f.autor}
+                </a>{' '}
+                en iNaturalist, {f.licencia}.
+              </li>
+            ))}
+          </ul>
+        </details>
       </div>
     </BottomSheet>
   );

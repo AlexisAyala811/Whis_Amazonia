@@ -11,6 +11,7 @@ import { useWhisStore } from '../hooks/useWhisStore';
 import type { CategoriaProducto, Producto } from '../types';
 import { soles, uid } from '../utils/fefoEngine';
 import { fotoCuadrada } from '../utils/fotos';
+import { fotoReal } from '../utils/fotosReales';
 import { emojiProducto } from '../utils/puesto';
 import { BottomSheet } from './ui/BottomSheet';
 import { ProductoAvatar } from './ui/LoteBits';
@@ -157,8 +158,8 @@ export function ProductosSheet({ open, onClose }: { open: boolean; onClose: () =
       ) : (
         <div className="space-y-4">
           <div className="flex items-center gap-3">
-            {b.foto ? (
-              <img src={b.foto} alt="" className="h-16 w-16 shrink-0 rounded-[18px] object-cover" />
+            {b.foto || fotoReal({ id: b.id ?? '', nombre: b.nombre }) ? (
+              <img src={b.foto ?? fotoReal({ id: b.id ?? '', nombre: b.nombre }) ?? ''} alt="" className="h-16 w-16 shrink-0 rounded-[18px] object-cover" />
             ) : (
               <span className="grid h-16 w-16 shrink-0 place-items-center rounded-[18px] bg-gradient-to-br from-[#FBF3DC] to-[#EADFC2] text-3xl dark:from-surface2 dark:to-surface2">
                 {emojiProducto({ id: b.id ?? '', nombre: b.nombre, categoria: b.categoria })}

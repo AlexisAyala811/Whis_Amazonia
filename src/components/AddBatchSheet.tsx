@@ -323,7 +323,7 @@ export function AddBatchSheet({ open, onClose }: Props) {
               type="button"
               onClick={vozSoportada ? toggleVoz : () => fraseManual && aplicarDictado(fraseManual)}
               className={`grid h-12 w-12 shrink-0 place-items-center rounded-full transition-all duration-200 active:scale-95 ${
-                escuchando ? 'bg-danger text-white' : 'bg-brand text-white dark:text-[#0D0F12]'
+                escuchando ? 'bg-danger text-white' : 'bg-brand text-white dark:text-[#0E1511]'
               }`}
               aria-label={escuchando ? 'Detener dictado' : 'Dictar por voz'}
             >
@@ -383,7 +383,7 @@ export function AddBatchSheet({ open, onClose }: Props) {
                   onClick={() => elegirProducto(p.id)}
                   aria-pressed={on}
                   className={`flex min-h-[96px] flex-col items-center justify-center gap-1.5 rounded-3xl border p-2 text-center transition-all duration-200 active:scale-95 ${
-                    on ? 'border-transparent bg-brand text-white dark:text-[#0D0F12]' : 'border-line bg-surface'
+                    on ? 'border-transparent bg-brand text-white dark:text-[#0E1511]' : 'border-line bg-surface'
                   }`}
                 >
                   <ProductoAvatar productoId={p.id} tamano="sm" className={on ? 'from-white/90 to-white/70' : ''} />
@@ -414,7 +414,7 @@ export function AddBatchSheet({ open, onClose }: Props) {
                 onClick={() => elegirEmpaque(e.id)}
                 aria-pressed={empaque === e.id}
                 className={`flex min-h-[56px] flex-col items-center justify-center rounded-2xl border px-1 transition-all duration-200 active:scale-95 ${
-                  empaque === e.id ? 'border-transparent bg-brand text-white dark:text-[#0D0F12]' : 'border-line bg-surface'
+                  empaque === e.id ? 'border-transparent bg-brand text-white dark:text-[#0E1511]' : 'border-line bg-surface'
                 }`}
               >
                 <span className="text-sm font-bold">{e.nombre}</span>
@@ -462,7 +462,7 @@ export function AddBatchSheet({ open, onClose }: Props) {
                     type="button"
                     onClick={() => setEnvases((n) => n + 1)}
                     aria-label="Sumar envase"
-                    className="grid h-11 w-11 place-items-center rounded-full bg-brand text-white active:scale-90 dark:text-[#0D0F12]"
+                    className="grid h-11 w-11 place-items-center rounded-full bg-brand text-white active:scale-90 dark:text-[#0E1511]"
                   >
                     <Plus size={18} />
                   </button>
@@ -502,7 +502,7 @@ export function AddBatchSheet({ open, onClose }: Props) {
             </span>
           </label>
 
-          <div className="mt-3 rounded-3xl bg-brand p-4 text-white dark:text-[#0D0F12]">
+          <div className="mt-3 rounded-3xl bg-brand p-4 text-white dark:text-[#0E1511]">
             <div className="flex items-center justify-between">
               <span className="flex items-center gap-1.5 text-xs font-semibold opacity-90">
                 <Scale size={15} /> Peso total estimado

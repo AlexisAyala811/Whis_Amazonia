@@ -21,18 +21,18 @@
 }
 
 .dark {
-  /* Obsidian Dark (por defecto) */
-  --bg: 13 15 18;
-  --surface: 22 25 31;
-  --surface2: 30 34 42;
+  /* Selva de noche: oscuro verdoso que combina con la marca (opcional) */
+  --bg: 14 21 17;
+  --surface: 22 32 26;
+  --surface2: 31 44 36;
   --line: 255 255 255;
-  --ink: 244 244 245;
-  --muted: 161 161 170;
-  --brand: 74 222 128;
-  --ok: 74 222 128;
-  --warn: 251 191 36;
-  --danger: 248 113 113;
-  --glass: 22 25 31;
+  --ink: 236 240 231;
+  --muted: 156 168 152;
+  --brand: 104 192 128;
+  --ok: 104 192 128;
+  --warn: 236 170 70;
+  --danger: 236 104 92;
+  --glass: 22 32 26;
   --scroll: 255 255 255;
   color-scheme: dark;
 }
@@ -76,7 +76,7 @@
     @apply inline-flex min-h-[44px] shrink-0 items-center justify-center gap-1.5 rounded-full border border-line bg-surface px-4 text-sm font-semibold text-ink transition-all duration-200 ease-out active:scale-95;
   }
   .chip-on {
-    @apply border-transparent bg-brand text-white dark:text-[#0D0F12];
+    @apply border-transparent bg-brand text-white dark:text-[#0E1511];
   }
   .seccion {
     @apply mb-2.5 flex items-center justify-between gap-2;
@@ -92,13 +92,13 @@
     @apply inline-flex min-h-[44px] items-center justify-center gap-2 rounded-2xl px-4 text-sm font-semibold transition-all duration-200 ease-out active:scale-[0.97] disabled:pointer-events-none disabled:opacity-40;
   }
   .btn-primary {
-    @apply btn bg-brand text-white dark:text-[#0D0F12];
+    @apply btn bg-brand text-white dark:text-[#0E1511];
   }
   .btn-ghost {
     @apply btn border border-line bg-surface text-ink hover:bg-surface2;
   }
   .btn-danger {
-    @apply btn bg-danger text-white dark:text-[#0D0F12];
+    @apply btn bg-danger text-white dark:text-[#0E1511];
   }
   .field {
     @apply min-h-[44px] w-full rounded-2xl border border-line bg-surface2/60 px-4 text-[15px] text-ink outline-none transition-all duration-200 placeholder:text-muted focus:border-brand focus:ring-2 focus:ring-brand/25;

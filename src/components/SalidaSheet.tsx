@@ -86,7 +86,7 @@ export function SalidaSheet({ lote, onClose, onMerma, onRemate }: Props) {
       <div className="space-y-4">
         {/* Venta o merma */}
         <div className="grid grid-cols-2 gap-1 rounded-full bg-surface2 p-1">
-          <span className="flex min-h-[44px] items-center justify-center gap-1.5 rounded-full bg-brand text-sm font-bold text-white dark:text-[#0D0F12]">
+          <span className="flex min-h-[44px] items-center justify-center gap-1.5 rounded-full bg-brand text-sm font-bold text-white dark:text-[#0E1511]">
             <ShoppingCart size={16} /> Venta / Salida
           </span>
           <button
@@ -152,7 +152,7 @@ export function SalidaSheet({ lote, onClose, onMerma, onRemate }: Props) {
             <button
               onClick={() => sumar(1)}
               aria-label="Sumar"
-              className="grid h-14 w-14 shrink-0 place-items-center rounded-full bg-brand text-white transition-all active:scale-90 dark:text-[#0D0F12]"
+              className="grid h-14 w-14 shrink-0 place-items-center rounded-full bg-brand text-white transition-all active:scale-90 dark:text-[#0E1511]"
             >
               <Plus size={22} />
             </button>
@@ -214,7 +214,7 @@ export function SalidaSheet({ lote, onClose, onMerma, onRemate }: Props) {
                   onClick={() => setMedio(m.id)}
                   aria-pressed={on}
                   className={`flex min-h-[72px] flex-col items-center justify-center gap-1 rounded-3xl border text-xs font-semibold transition-all duration-200 active:scale-95 ${
-                    on ? 'border-transparent bg-brand text-white dark:text-[#0D0F12]' : 'border-line bg-surface'
+                    on ? 'border-transparent bg-brand text-white dark:text-[#0E1511]' : 'border-line bg-surface'
                   }`}
                 >
                   <Icono size={20} />
