@@ -4,37 +4,46 @@
 
 /* ---------- Tokens de tema ---------- */
 :root {
-  /* Crema del mercado con verde selva (claro, por defecto) */
-  --bg: 244 241 232;
-  --surface: 255 255 255;
-  --surface2: 238 234 222;
-  --line: 228 222 207;
-  --ink: 27 36 29;
-  --muted: 96 101 90;
+  /* Blanco crema de base, todo lo demás en verde selva (claro, por defecto) */
+  --bg: 250 246 236;
+  --surface: 255 253 247;
+  --surface2: 232 240 228;
+  --line: 214 227 210;
+  --ink: 20 46 30;
+  --muted: 84 104 88;
   --brand: 21 87 46;
   --ok: 24 116 56;
   --warn: 156 82 4;
   --danger: 180 46 36;
-  --glass: 255 255 255;
+  --glass: 255 253 247;
   --scroll: 0 0 0;
   color-scheme: light;
 }
 
 .dark {
-  /* Selva de noche: oscuro verdoso que combina con la marca (opcional) */
-  --bg: 14 21 17;
-  --surface: 22 32 26;
-  --surface2: 31 44 36;
+  /* Selva de noche: fondo verde oscuro (opcional) */
+  --bg: 13 51 31;
+  --surface: 20 66 41;
+  --surface2: 29 82 52;
   --line: 255 255 255;
   --ink: 236 240 231;
-  --muted: 156 168 152;
-  --brand: 104 192 128;
+  --muted: 160 188 166;
+  --brand: 112 200 136;
   --ok: 104 192 128;
   --warn: 236 170 70;
   --danger: 236 104 92;
-  --glass: 22 32 26;
+  --glass: 20 66 41;
   --scroll: 255 255 255;
   color-scheme: dark;
+}
+
+/* Logo propio de Whis: toma el color del texto (verde, blanco, etc.) */
+.logo-whis {
+  display: inline-block;
+  aspect-ratio: 987 / 338;
+  background-color: currentColor;
+  -webkit-mask: url('/logo-whis.png') center / contain no-repeat;
+  mask: url('/logo-whis.png') center / contain no-repeat;
 }
 
 @layer base {
@@ -97,7 +106,7 @@
     @apply inline-flex min-h-[44px] shrink-0 items-center justify-center gap-1.5 rounded-full border border-line bg-surface px-4 text-sm font-semibold text-ink transition-all duration-200 ease-out active:scale-95;
   }
   .chip-on {
-    @apply border-transparent bg-brand text-white dark:text-[#0E1511];
+    @apply border-transparent bg-brand text-white dark:text-[#0D331F];
   }
   .seccion {
     @apply mb-2.5 flex items-center justify-between gap-2;
@@ -113,13 +122,13 @@
     @apply inline-flex min-h-[44px] items-center justify-center gap-2 rounded-2xl px-4 text-sm font-semibold transition-all duration-200 ease-out active:scale-[0.97] disabled:pointer-events-none disabled:opacity-40;
   }
   .btn-primary {
-    @apply btn bg-brand text-white dark:text-[#0E1511];
+    @apply btn bg-brand text-white dark:text-[#0D331F];
   }
   .btn-ghost {
     @apply btn border border-line bg-surface text-ink hover:bg-surface2;
   }
   .btn-danger {
-    @apply btn bg-danger text-white dark:text-[#0E1511];
+    @apply btn bg-danger text-white dark:text-[#0D331F];
   }
   .field {
     @apply min-h-[44px] w-full rounded-2xl border border-line bg-surface2/60 px-4 text-[15px] text-ink outline-none transition-all duration-200 placeholder:text-muted focus:border-brand focus:ring-2 focus:ring-brand/25;

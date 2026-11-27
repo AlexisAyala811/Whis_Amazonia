@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from 'react';
-import { ArrowRight, FlaskConical, Leaf, MessageCircle, Store, ThermometerSnowflake, WifiOff } from 'lucide-react';
+import { ArrowRight, FlaskConical, MessageCircle, Store, ThermometerSnowflake, WifiOff } from 'lucide-react';
 import { useWhisStore } from '../hooks/useWhisStore';
 import { FOTOS_REALES } from '../utils/fotosReales';
 
@@ -54,22 +54,14 @@ export function Bienvenida({ open, onEntrar }: Props) {
     <div className="fixed inset-0 z-[60] overflow-y-auto bg-canvas" role="dialog" aria-modal="true" aria-label="Bienvenida a Whis Amazonia">
       <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col gap-5 px-4 pb-[calc(max(1.5rem,env(safe-area-inset-bottom))+var(--insignia,0px))] pt-[max(1.5rem,env(safe-area-inset-top))] md:max-w-4xl md:flex-row md:items-center md:gap-8 md:px-8">
         {/* Portada de marca */}
-        <section className="relative animate-fade-in overflow-hidden rounded-[2rem] bg-brand p-6 text-white md:flex-1 md:p-8 dark:text-[#0E1511]">
+        <section className="relative animate-fade-in overflow-hidden rounded-[2rem] bg-brand p-6 text-white md:flex-1 md:p-8 dark:text-[#0D331F]">
           <div className="pointer-events-none absolute -right-10 -top-10 h-44 w-44 rounded-full bg-white/10" />
           <div className="pointer-events-none absolute -bottom-16 -left-8 h-40 w-40 rounded-full bg-white/10" />
-          <div className="relative flex items-center gap-2.5">
-            <span className="grid h-11 w-11 place-items-center rounded-2xl bg-white/15">
-              <Leaf size={22} strokeWidth={2.4} />
-            </span>
-            <img src={`${import.meta.env.BASE_URL}logo-whis.png`} alt="Whis" className="h-6 w-auto invert dark:invert-0" />
-            <span className="rounded-full bg-white/15 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide">Amazonia</span>
+          <div className="relative flex items-end gap-2.5">
+            <span role="img" aria-label="Whis" className="logo-whis h-16 md:h-20" />
+            <span className="mb-1.5 rounded-full bg-white/15 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide">Amazonia</span>
           </div>
-          <h1 className="relative mt-6 text-[28px] font-extrabold leading-[1.1] md:text-4xl">
-            Cuida tu mercadería,
-            <br />
-            evita pérdidas.
-          </h1>
-          <p className="relative mt-2 text-sm opacity-85">
+          <p className="relative mt-4 text-sm opacity-90">
             Control de lotes perecibles para tu puesto: camu camu, aguaje, cocona, plátano y más.
           </p>
           <div className="relative mt-5 flex gap-2" aria-hidden="true">
@@ -181,7 +173,7 @@ function OpcionEntrada({
       onClick={onClick}
       className={`flex w-full items-center gap-3 rounded-3xl p-4 text-left transition-all duration-200 active:scale-[0.98] ${
         principal
-          ? 'bg-brand text-white shadow-[0_12px_28px_-14px_rgb(var(--brand)/0.9)] dark:text-[#0E1511]'
+          ? 'bg-brand text-white shadow-[0_12px_28px_-14px_rgb(var(--brand)/0.9)] dark:text-[#0D331F]'
           : 'card border border-line hover:border-brand/40'
       }`}
     >

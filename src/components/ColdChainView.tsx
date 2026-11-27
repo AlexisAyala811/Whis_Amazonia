@@ -73,7 +73,7 @@ export function ColdChainView() {
 
       <button
         onClick={() => setAbierto(true)}
-        className="group relative flex min-h-[88px] w-full items-center gap-4 overflow-hidden rounded-3xl bg-danger p-5 text-left text-white shadow-soft transition-all duration-200 ease-out active:scale-[0.98] dark:text-[#0E1511]"
+        className="group relative flex min-h-[88px] w-full items-center gap-4 overflow-hidden rounded-3xl bg-danger p-5 text-left text-white shadow-soft transition-all duration-200 ease-out active:scale-[0.98] dark:text-[#0D331F]"
       >
         <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-white/20">
           <ZapOff size={26} />
@@ -181,7 +181,7 @@ export function ColdChainView() {
                   key={h}
                   onClick={() => setHoras(h)}
                   className={`min-h-[48px] rounded-2xl border text-sm font-bold transition-all duration-200 active:scale-95 ${
-                    horas === h ? 'border-transparent bg-danger text-white dark:text-[#0E1511]' : 'border-line bg-surface2/60'
+                    horas === h ? 'border-transparent bg-danger text-white dark:text-[#0D331F]' : 'border-line bg-surface2/60'
                   }`}
                 >
                   {h}h
