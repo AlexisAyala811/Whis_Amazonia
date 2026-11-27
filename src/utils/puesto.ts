@@ -160,3 +160,10 @@ export function salidasDeHoy(data: AppData, ahora: number, loteId?: string): Sal
     .filter((s) => diaLocal(s.fecha) === hoy && (!loteId || s.loteId === loteId))
     .sort((a, b) => b.fecha.localeCompare(a.fecha));
 }
+
+/** Celular peruano de 9 dígitos a partir de lo escrito ("987 654 321", "+51 987654321"); null si no cuadra */
+export function celularPeru(texto: string): string | null {
+  let d = texto.replace(/\D/g, '');
+  if (d.length === 11 && d.startsWith('51')) d = d.slice(2);
+  return /^9\d{8}$/.test(d) ? d : null;
+}

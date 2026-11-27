@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 
@@ -13,12 +13,17 @@ interface Props {
   elevated?: boolean;
 }
 
+/** Hojas abiertas, de la más antigua a la más reciente: Escape cierra solo la de arriba */
+const pila: string[] = [];
+
 /** Hoja deslizable inferior en móvil; tarjeta centrada en escritorio. */
 export function BottomSheet({ open, onClose, title, subtitle, children, footer, elevated }: Props) {
   const [montado, setMontado] = useState(open);
   const [cerrando, setCerrando] = useState(false);
   const [arrastre, setArrastre] = useState(0);
   const inicioY = useRef<number | null>(null);
+  const dialogoRef = useRef<HTMLDivElement>(null);
+  const id = useId();
 
   useEffect(() => {
     if (open) {
@@ -37,15 +42,33 @@ export function BottomSheet({ open, onClose, title, subtitle, children, footer, 
 
   useEffect(() => {
     if (!open) return;
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && pila[pila.length - 1] === id) {
+        e.stopPropagation();
+        onClose();
+      }
+    };
     window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [open, onClose, id]);
+
+  // Al abrir: bloquea el scroll de fondo y lleva el foco a la hoja (lectores de
+  // pantalla y teclado). Al cerrar: devuelve el foco a donde estaba.
+  useEffect(() => {
+    if (!open) return;
+    pila.push(id);
+    const previo = document.activeElement as HTMLElement | null;
     const prev = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
+    const t = window.setTimeout(() => dialogoRef.current?.focus({ preventScroll: true }), 30);
     return () => {
-      window.removeEventListener('keydown', onKey);
-      document.body.style.overflow = prev;
+      window.clearTimeout(t);
+      const i = pila.lastIndexOf(id);
+      if (i >= 0) pila.splice(i, 1);
+      document.body.style.overflow = pila.length > 0 ? 'hidden' : prev === 'hidden' ? '' : prev;
+      if (previo && document.contains(previo)) previo.focus({ preventScroll: true });
     };
-  }, [open, onClose]);
+  }, [open, id]);
 
   if (!montado) return null;
 
@@ -58,9 +81,12 @@ export function BottomSheet({ open, onClose, title, subtitle, children, footer, 
         onClick={onClose}
       />
       <div
+        ref={dialogoRef}
         role="dialog"
         aria-modal="true"
-        className={`relative flex max-h-[92dvh] w-full max-w-md flex-col rounded-t-3xl border border-line bg-surface shadow-soft transition-transform duration-200 ease-out sm:mb-0 sm:rounded-3xl ${
+        aria-labelledby={title ? `${id}-titulo` : undefined}
+        tabIndex={-1}
+        className={`relative flex outline-none max-h-[92dvh] w-full max-w-md flex-col rounded-t-3xl border border-line bg-surface shadow-soft transition-transform duration-200 ease-out sm:mb-0 sm:rounded-3xl ${
           cerrando ? 'translate-y-full sm:translate-y-8 sm:opacity-0' : 'animate-sheet-in'
         }`}
         style={arrastre ? { transform: `translateY(${arrastre}px)`, transition: 'none' } : undefined}
@@ -85,7 +111,11 @@ export function BottomSheet({ open, onClose, title, subtitle, children, footer, 
         {(title || subtitle) && (
           <div className="flex items-start gap-3 px-5 pb-3 pt-2 sm:pt-5">
             <div className="min-w-0 flex-1">
-              {title && <h2 className="text-lg font-bold leading-tight">{title}</h2>}
+              {title && (
+                <h2 id={`${id}-titulo`} className="text-lg font-bold leading-tight">
+                  {title}
+                </h2>
+              )}
               {subtitle && <p className="mt-0.5 text-sm text-muted">{subtitle}</p>}
             </div>
             <button

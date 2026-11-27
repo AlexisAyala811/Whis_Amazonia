@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { crearDatosVacios } from '../data/seedData';
 import type { AppData, Lote } from '../types';
-import { emojiProducto, envasesDisponibles, haceDias, porcentajeSalido, resumenDelDia, salidasDeHoy } from './puesto';
+import { celularPeru, emojiProducto, envasesDisponibles, haceDias, porcentajeSalido, resumenDelDia, salidasDeHoy } from './puesto';
 
 const AHORA = new Date(2026, 10, 26, 15, 0, 0).getTime();
 const hace = (d: number, h = 9) => {
@@ -81,5 +81,18 @@ describe('ventas del día', () => {
     expect(s.map((x) => x.id)).toEqual(['b1', 'q1', 'd1']);
     expect(s[0].monto).toBe(-22);
     expect(s[2].detalle).toBe('Mayorista · Yape / Plin');
+  });
+});
+
+describe('celularPeru', () => {
+  it('acepta 9 dígitos con espacios o con +51', () => {
+    expect(celularPeru('987 654 321')).toBe('987654321');
+    expect(celularPeru('+51 987-654-321')).toBe('987654321');
+    expect(celularPeru('51987654321')).toBe('987654321');
+  });
+  it('rechaza números incompletos o fijos', () => {
+    expect(celularPeru('98765432')).toBeNull();
+    expect(celularPeru('012345678')).toBeNull();
+    expect(celularPeru('')).toBeNull();
   });
 });

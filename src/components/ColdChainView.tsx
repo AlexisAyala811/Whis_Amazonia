@@ -15,7 +15,10 @@ export function ColdChainView() {
   const toast = useToast();
   const [abierto, setAbierto] = useState(false);
   const [camara, setCamara] = useState<string>('todas');
-  const [horas, setHoras] = useState(2);
+  const [horasTxt, setHorasTxt] = useState('2');
+  const horas = Number(horasTxt);
+  const horasValidas = Number.isFinite(horas) && horas >= 0.25 && horas <= 72;
+  const setHoras = (h: number) => setHorasTxt(String(h));
   const [nota, setNota] = useState('');
   const [ultimo, setUltimo] = useState<(ResultadoApagon & { horas: number; nombre: string }) | null>(null);
 
@@ -44,6 +47,7 @@ export function ColdChainView() {
   ];
 
   const confirmar = () => {
+    if (!horasValidas) return;
     const ids: CamaraId[] = camara === 'todas' ? CAMARAS.map((c) => c.id) : [camara as CamaraId];
     const r = registrarApagon(ids, horas, nota);
     const nombre = camara === 'todas' ? 'Todas las cámaras' : getCamara(camara as CamaraId).nombre;
@@ -63,7 +67,7 @@ export function ColdChainView() {
   return (
     <div className="space-y-5">
       <div>
-        <h1 className="text-xl font-bold">Control de frío</h1>
+        <h1 className="text-[22px] font-extrabold leading-tight">Control de frío</h1>
         <p className="text-xs text-muted">Registra apagones y fallas: el motor FEFO se recalcula al instante</p>
       </div>
 
@@ -75,7 +79,7 @@ export function ColdChainView() {
           <ZapOff size={26} />
         </span>
         <span>
-          <span className="block text-base font-extrabold leading-tight">Registrar Corte de Luz / Falla de Frío</span>
+          <span className="block text-base font-extrabold leading-tight">Registrar corte de luz o falla de frío</span>
           <span className="mt-0.5 block text-xs opacity-80">Suma horas de calor a los lotes de la cámara</span>
         </span>
       </button>
@@ -162,8 +166,8 @@ export function ColdChainView() {
         title="Registrar corte de luz"
         subtitle="Se sumarán las horas a la exposición al calor de cada lote"
         footer={
-          <button className="btn-danger w-full" onClick={confirmar}>
-            <Zap size={18} /> Confirmar apagón de {horas} h
+          <button className="btn-danger w-full" onClick={confirmar} disabled={!horasValidas}>
+            <Zap size={18} /> {horasValidas ? `Confirmar apagón de ${horas} h` : 'Indica las horas (máx. 72)'}
           </button>
         }
       >
@@ -189,10 +193,13 @@ export function ColdChainView() {
               <input
                 type="number"
                 inputMode="decimal"
-                min={0.5}
+                min={0.25}
+                max={72}
                 step={0.5}
-                value={horas}
-                onChange={(e) => setHoras(Math.max(0.5, Number(e.target.value) || 0.5))}
+                value={horasTxt}
+                onChange={(e) => setHorasTxt(e.target.value)}
+                aria-label="Horas sin energía"
+                aria-invalid={!horasValidas}
                 className="field min-h-[44px] w-24 text-center"
               />
               <span className="text-xs text-muted">horas</span>

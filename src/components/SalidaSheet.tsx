@@ -28,8 +28,9 @@ export function SalidaSheet({ lote, onClose, onMerma, onRemate }: Props) {
   const [precio, setPrecio] = useState('');
 
   const porEnvase = lote?.envase?.kgPorEnvase ?? 0;
-  const enEnvases = !!lote && envasesDisponibles(lote) !== null && porEnvase > 0;
-  const maximo = lote ? (enEnvases ? envasesDisponibles(lote)! : Math.floor(lote.pesoKg * 10) / 10) : 0;
+  // Con menos de un envase entero, lo que queda se vende en kilos
+  const enEnvases = !!lote && porEnvase > 0 && (envasesDisponibles(lote) ?? 0) >= 1;
+  const maximo = lote ? (enEnvases ? envasesDisponibles(lote)! : Math.round(lote.pesoKg * 100) / 100) : 0;
 
   useEffect(() => {
     if (!lote) return;
@@ -52,7 +53,8 @@ export function SalidaSheet({ lote, onClose, onMerma, onRemate }: Props) {
   const precioKg = enEnvases ? precioUnidad / porEnvase : precioUnidad;
   const total = +(kgSalida * precioKg).toFixed(2);
   const valido = kgSalida > 0 && precioKg > 0;
-  const sumar = (n: number) => setCantidad((c) => Math.max(0, Math.min(maximo, +(c + n).toFixed(1))));
+  const ajustar = (n: number) => Math.max(0, Math.min(maximo, enEnvases ? Math.round(n) : +n.toFixed(2)));
+  const sumar = (n: number) => setCantidad((c) => ajustar(c + n));
   const salidas = salidasDeHoy(data, ahora).slice(0, 4);
 
   const confirmar = () => {
@@ -75,7 +77,7 @@ export function SalidaSheet({ lote, onClose, onMerma, onRemate }: Props) {
       footer={
         <div>
           <button className="btn-primary w-full py-3 text-base" disabled={!valido} onClick={confirmar}>
-            <Check size={20} /> Confirmar venta · {soles(total)}
+            <Check size={20} /> {kgSalida > 0 ? (precioKg > 0 ? `Confirmar venta · ${soles(total)}` : 'Indica el precio') : 'Indica la cantidad'}
           </button>
           <p className="mt-1.5 flex items-center justify-center gap-1.5 text-[11px] text-muted">
             <HardDriveDownload size={12} /> Se guarda al instante en este equipo
@@ -111,7 +113,7 @@ export function SalidaSheet({ lote, onClose, onMerma, onRemate }: Props) {
               </b>
             </p>
           </div>
-          {lote.fefo.semaforo !== 'verde' && <span className="pill shrink-0 bg-ok/15 px-2 text-ok">FEFO</span>}
+          {lote.fefo.semaforo !== 'verde' && <span className="pill shrink-0 bg-warn/15 px-2 text-warn">Sale primero</span>}
         </div>
         {lote.fefo.semaforo === 'rojo' && (
           <button
@@ -140,11 +142,13 @@ export function SalidaSheet({ lote, onClose, onMerma, onRemate }: Props) {
               <input
                 className="w-full bg-transparent text-center text-4xl font-extrabold tabular-nums outline-none"
                 type="number"
-                inputMode="decimal"
+                inputMode={enEnvases ? 'numeric' : 'decimal'}
                 min={0}
                 max={maximo}
+                step={enEnvases ? 1 : 0.1}
                 value={cantidad}
-                onChange={(e) => setCantidad(Math.max(0, Math.min(maximo, Number(e.target.value) || 0)))}
+                onFocus={(e) => e.target.select()}
+                onChange={(e) => setCantidad(ajustar(Number(e.target.value) || 0))}
                 aria-label={`Cantidad en ${unidad}`}
               />
               <p className="text-xs text-muted">{enEnvases ? `${unidad} · ≈ ${kg(kgSalida)}` : 'kilos'}</p>

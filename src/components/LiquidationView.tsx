@@ -4,6 +4,7 @@ import { getCamara, getProducto } from '../data/catalog';
 import { useWhisStore } from '../hooks/useWhisStore';
 import type { CompradorB2B } from '../types';
 import { formatoHora, formatoHoras, kg, soles, type LoteFefo } from '../utils/fefoEngine';
+import { celularPeru } from '../utils/puesto';
 import { LoteCard } from './LoteCard';
 import { BottomSheet } from './ui/BottomSheet';
 import { ModernSelect } from './ui/ModernSelect';
@@ -33,8 +34,8 @@ export function LiquidationView({ preseleccion, limpiarPreseleccion }: Props) {
   return (
     <div className="space-y-5">
       <div>
-        <h1 className="text-xl font-bold">Liquidación relámpago</h1>
-        <p className="text-xs text-muted">Rescata caja antes de la merma: ofertas B2B por WhatsApp</p>
+        <h1 className="text-[22px] font-extrabold leading-tight">Remate relámpago</h1>
+        <p className="text-xs text-muted">Recupera dinero antes de la merma: ofertas a tus compradores por WhatsApp</p>
       </div>
 
       <div className="card flex items-center gap-3 p-4">
@@ -42,7 +43,9 @@ export function LiquidationView({ preseleccion, limpiarPreseleccion }: Props) {
           <Zap size={20} />
         </span>
         <div>
-          <p className="text-xs text-muted">{candidatos.length} lotes listos para rescate · caja estimada (30 % OFF)</p>
+          <p className="text-xs text-muted">
+            {candidatos.length} {candidatos.length === 1 ? 'lote listo' : 'lotes listos'} para rematar · podrías recuperar (con 30 % de descuento)
+          </p>
           <p className="text-xl font-bold tabular-nums">{soles(potencial)}</p>
         </div>
       </div>
@@ -70,7 +73,7 @@ export function LiquidationView({ preseleccion, limpiarPreseleccion }: Props) {
 
       {liquidadas.length > 0 && (
         <section>
-          <h2 className="mb-2 text-base font-bold">Últimas liquidaciones</h2>
+          <h2 className="mb-2 text-base font-bold">Últimos remates</h2>
           <div className="card divide-y divide-line">
             {liquidadas.map((liq) => (
               <div key={liq.id} className="flex items-center justify-between gap-3 px-4 py-3">
@@ -144,7 +147,7 @@ function OfertaSheet({ lote, onClose }: { lote: LoteFefo | null; onClose: () => 
       `Precio de remate: *${soles(calculo.precioRemate)}/kg* (${descuento}% OFF)`,
       `Total del lote: *${soles(calculo.total)}*`,
       ``,
-      `⏰ Retiro hasta hoy a las *${formatoHora(calculo.limite)}*.`,
+      `⏰ Retiro hasta ${new Date(calculo.limite).toDateString() === new Date().toDateString() ? 'hoy' : 'mañana'} a las *${formatoHora(calculo.limite)}*.`,
       `Responda *SÍ* para separar el lote. Primero en confirmar se lo lleva.`,
     ].join('\n');
   }, [lote, calculo, descuento]);
@@ -180,9 +183,17 @@ function OfertaSheet({ lote, onClose }: { lote: LoteFefo | null; onClose: () => 
 
   const guardarNuevo = () => {
     if (!nuevo) return;
-    const digitos = limpiarTel(nuevo.telefono);
-    if (nuevo.nombre.trim().length < 2 || digitos.length !== 9) {
-      toast('error', 'Datos incompletos', 'Ingresa el nombre y un celular de 9 dígitos.');
+    // Se acepta también con el código de Perú delante (+51 987 654 321)
+    const digitos = celularPeru(nuevo.telefono);
+    if (nuevo.nombre.trim().length < 2 || !digitos) {
+      toast('error', 'Datos incompletos', 'Ingresa el nombre y un celular de 9 dígitos que empiece con 9.');
+      return;
+    }
+    const repetido = data.compradores.find((c) => limpiarTel(c.telefono) === `51${digitos}`);
+    if (repetido) {
+      setSeleccion((s) => (s.includes(repetido.id) ? s : [...s, repetido.id]));
+      setNuevo(null);
+      toast('info', 'Ese celular ya está en tu agenda', `Es de ${repetido.nombre}; quedó seleccionado.`);
       return;
     }
     const c = agregarComprador({ nombre: nuevo.nombre.trim(), rubro: nuevo.rubro.trim() || 'Comprador B2B', telefono: `51${digitos}` });
@@ -195,7 +206,7 @@ function OfertaSheet({ lote, onClose }: { lote: LoteFefo | null; onClose: () => 
     if (!comprador) return;
     const liq = liquidar(lote.id, descuento, comprador);
     if (liq) {
-      toast('exito', `Lote ${lote.codigoQR} liquidado`, `+${soles(liq.total)} a Caja Recuperada`);
+      toast('exito', `Lote ${lote.codigoQR} rematado`, `+${soles(liq.total)} recuperados`);
       onClose();
     }
   };
@@ -204,7 +215,7 @@ function OfertaSheet({ lote, onClose }: { lote: LoteFefo | null; onClose: () => 
     <BottomSheet
       open={!!lote}
       onClose={onClose}
-      title={`Liquidar ${getProducto(lote.productoId).nombreCorto}`}
+      title={`Rematar ${getProducto(lote.productoId).nombreCorto}`}
       subtitle={`${lote.codigoQR} · ${kg(lote.pesoKg)} · quedan ${formatoHoras(lote.fefo.horasRestantes)}`}
       footer={
         <div className="space-y-2">
@@ -230,7 +241,7 @@ function OfertaSheet({ lote, onClose }: { lote: LoteFefo | null; onClose: () => 
                 compact
               />
               <button className="btn-primary w-full" onClick={confirmarLiquidacion} disabled={!comprador}>
-                <Check size={18} /> Marcar como Liquidado · {soles(calculo.total)}
+                <Check size={18} /> Marcar como rematado · {soles(calculo.total)}
               </button>
             </div>
           )}
@@ -269,7 +280,7 @@ function OfertaSheet({ lote, onClose }: { lote: LoteFefo | null; onClose: () => 
               <p className="text-lg font-bold tabular-nums">{soles(calculo.precioRemate)}</p>
             </div>
             <div className="rounded-2xl bg-ok/15 p-3 text-ok">
-              <p className="text-[11px]">Caja a recuperar</p>
+              <p className="text-[11px]">Dinero a recuperar</p>
               <p className="text-lg font-bold tabular-nums">{soles(calculo.total)}</p>
             </div>
           </div>
@@ -297,7 +308,7 @@ function OfertaSheet({ lote, onClose }: { lote: LoteFefo | null; onClose: () => 
                   className="field"
                   inputMode="numeric"
                   placeholder="Celular (9 dígitos)"
-                  maxLength={11}
+                  maxLength={15}
                   value={nuevo.telefono}
                   onChange={(e) => setNuevo({ ...nuevo, telefono: e.target.value })}
                 />
@@ -308,6 +319,16 @@ function OfertaSheet({ lote, onClose }: { lote: LoteFefo | null; onClose: () => 
             </div>
           )}
 
+          {data.compradores.length === 0 && !nuevo && (
+            <button
+              type="button"
+              onClick={() => setNuevo({ nombre: '', rubro: '', telefono: '' })}
+              className="flex w-full flex-col items-center gap-1 rounded-2xl border border-dashed border-line p-4 text-center text-sm text-muted"
+            >
+              <UserPlus size={20} className="text-brand" />
+              Aún no tienes compradores. Agrega a quien suele comprarte (restaurantes, bodegas, mercados).
+            </button>
+          )}
           <ul className="space-y-2">
             {data.compradores.map((c) => {
               const sel = seleccion.includes(c.id);

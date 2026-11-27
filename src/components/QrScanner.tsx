@@ -11,7 +11,8 @@ type BarcodeDetectorCtor = new (opts?: { formats?: string[] }) => BarcodeDetecto
 
 interface Props {
   onResultado: (texto: string) => void;
-  onSimular: () => void;
+  /** Solo en la demo: llena el formulario con un QR de ejemplo */
+  onSimular?: () => void;
   codigoSimulado: string;
 }
 
@@ -33,7 +34,7 @@ export function QrScanner({ onResultado, onSimular, codigoSimulado }: Props) {
 
     (async () => {
       if (!Detector) {
-        setError('Este navegador no lee QR de forma nativa. Usa Chrome en Android o el botón de simulación.');
+        setError('Este navegador no lee QR. Usa Chrome en Android o escribe el código del lote arriba.');
         setActivo(false);
         return;
       }
@@ -43,8 +44,15 @@ export function QrScanner({ onResultado, onSimular, codigoSimulado }: Props) {
         videoRef.current.srcObject = stream;
         await videoRef.current.play();
         const detector = new Detector({ formats: ['qr_code'] });
-        const loop = async () => {
+        // Se analiza ~6 veces por segundo: basta para leer y no recalienta el celular
+        let ultimo = 0;
+        const loop = async (t = 0) => {
           if (cancelado || !videoRef.current) return;
+          if (t - ultimo < 160) {
+            raf = requestAnimationFrame(loop);
+            return;
+          }
+          ultimo = t;
           try {
             const codes = await detector.detect(videoRef.current);
             if (codes.length > 0) {
@@ -57,9 +65,9 @@ export function QrScanner({ onResultado, onSimular, codigoSimulado }: Props) {
           }
           raf = requestAnimationFrame(loop);
         };
-        loop();
+        raf = requestAnimationFrame(loop);
       } catch {
-        setError('No se pudo abrir la cámara. Revisa los permisos o usa la simulación.');
+        setError('No se pudo abrir la cámara. Revisa los permisos o escribe el código del lote arriba.');
         setActivo(false);
       }
     })();
@@ -80,7 +88,7 @@ export function QrScanner({ onResultado, onSimular, codigoSimulado }: Props) {
           <ScanLine className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 animate-pulse text-white" size={48} />
         </div>
       )}
-      <div className="grid grid-cols-2 gap-2">
+      <div className={`grid gap-2 ${onSimular ? 'grid-cols-2' : 'grid-cols-1'}`}>
         <button
           type="button"
           className="btn-ghost"
@@ -92,9 +100,11 @@ export function QrScanner({ onResultado, onSimular, codigoSimulado }: Props) {
           {activo ? <CameraOff size={18} /> : <QrCode size={18} />}
           {activo ? 'Cerrar cámara' : 'Escanear QR'}
         </button>
-        <button type="button" className="btn-ghost" onClick={onSimular}>
-          <ScanLine size={18} /> Simular {codigoSimulado}
-        </button>
+        {onSimular && (
+          <button type="button" className="btn-ghost" onClick={onSimular}>
+            <ScanLine size={18} /> Simular {codigoSimulado}
+          </button>
+        )}
       </div>
       {error && <p className="text-xs text-warn">{error}</p>}
     </div>
