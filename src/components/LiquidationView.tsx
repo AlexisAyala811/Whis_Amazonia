@@ -322,7 +322,7 @@ function OfertaSheet({ lote, onClose }: { lote: LoteFefo | null; onClose: () => 
                   >
                     <span
                       className={`grid h-6 w-6 shrink-0 place-items-center rounded-lg border-2 transition-all duration-200 ${
-                        sel ? 'border-brand bg-brand text-white dark:text-[#0D0F12]' : 'border-muted/40'
+                        sel ? 'border-brand bg-brand text-white dark:text-[#0E1511]' : 'border-muted/40'
                       }`}
                     >
                       {sel && <Check size={14} strokeWidth={3} />}

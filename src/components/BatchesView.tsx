@@ -72,7 +72,7 @@ export function BatchesView({ onAbrir, onSalida, onLiquidar }: Props) {
       </div>
 
       <div className="flex items-center gap-3 rounded-3xl bg-brand/10 p-3.5">
-        <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-brand text-white dark:text-[#0D0F12]">
+        <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-brand text-white dark:text-[#0E1511]">
           <PackageOpen size={20} />
         </span>
         <div className="min-w-0 flex-1">
@@ -100,7 +100,7 @@ export function BatchesView({ onAbrir, onSalida, onLiquidar }: Props) {
           aria-label="Filtrar por ambiente"
           aria-pressed={verCamaras || camara !== 'todas'}
           className={`grid h-11 w-11 shrink-0 place-items-center rounded-full border transition-all duration-200 active:scale-95 ${
-            camara !== 'todas' ? 'border-transparent bg-brand text-white dark:text-[#0D0F12]' : 'border-line bg-surface text-ink'
+            camara !== 'todas' ? 'border-transparent bg-brand text-white dark:text-[#0E1511]' : 'border-line bg-surface text-ink'
           }`}
         >
           <SlidersHorizontal size={18} />

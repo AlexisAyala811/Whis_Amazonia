@@ -1,6 +1,7 @@
 import { getProducto } from '../../data/catalog';
 import type { Semaforo } from '../../types';
 import { SEMAFORO_INFO } from '../../utils/fefoEngine';
+import { fotoDeProducto } from '../../utils/fotosReales';
 import { emojiProducto } from '../../utils/puesto';
 
 export function SemaforoBadge({ semaforo }: { semaforo: Semaforo }) {
@@ -27,7 +28,8 @@ export function LifeBar({ porcentaje, semaforo }: { porcentaje: number; semaforo
 /** Ícono del producto (se mantiene por compatibilidad: ahora es el emoji) */
 export function ProductoIcono({ productoId, size = 18 }: { productoId: string; size?: number }) {
   const p = getProducto(productoId);
-  if (p.foto) return <img src={p.foto} alt="" className="rounded-lg object-cover" style={{ width: size + 6, height: size + 6 }} />;
+  const foto = fotoDeProducto(p);
+  if (foto) return <img src={foto} alt="" loading="lazy" className="rounded-lg object-cover" style={{ width: size + 6, height: size + 6 }} />;
   return (
     <span aria-hidden style={{ fontSize: size, lineHeight: 1 }}>
       {emojiProducto(getProducto(productoId))}
@@ -40,8 +42,9 @@ const TAMANOS = { sm: 'h-10 w-10 text-xl rounded-2xl', md: 'h-12 w-12 text-2xl r
 /** Avatar cuadrado del producto, al estilo de una foto de góndola */
 export function ProductoAvatar({ productoId, tamano = 'md', className = '' }: { productoId: string; tamano?: keyof typeof TAMANOS; className?: string }) {
   const p = getProducto(productoId);
-  if (p.foto)
-    return <img src={p.foto} alt="" className={`shrink-0 object-cover ${TAMANOS[tamano]} ${className}`} />;
+  const foto = fotoDeProducto(p);
+  if (foto)
+    return <img src={foto} alt="" loading="lazy" className={`shrink-0 object-cover shadow-sm ${TAMANOS[tamano]} ${className}`} />;
   return (
     <span
       aria-hidden
