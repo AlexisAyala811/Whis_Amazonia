@@ -122,7 +122,7 @@ export function GuiaRapida({ open, onClose }: { open: boolean; onClose: () => vo
         </div>
 
         <div key={paso} className="animate-fade-in pt-2 text-center">
-          <span className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-brand text-white dark:text-[#0E1511]">
+          <span className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-brand text-white dark:text-[#0D331F]">
             {p.icono}
           </span>
           <h2 id="guia-titulo" className="mt-4 text-xl font-extrabold">

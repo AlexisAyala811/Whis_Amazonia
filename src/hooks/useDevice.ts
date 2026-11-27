@@ -26,7 +26,7 @@ export function useTheme(): [Tema, () => void] {
   );
   useEffect(() => {
     document.documentElement.classList.toggle('dark', tema === 'dark');
-    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', tema === 'dark' ? '#0E1511' : '#F4F1E8');
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', tema === 'dark' ? '#0D331F' : '#FAF6EC');
     try {
       localStorage.setItem(TEMA_KEY, tema);
       // La versión anterior guardaba siempre "dark" (era el tema por defecto): se descarta

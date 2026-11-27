@@ -90,7 +90,7 @@ export function CierreDiaSheet({ open, onClose }: { open: boolean; onClose: () =
         )}
 
         {/* Total del día */}
-        <section className="rounded-3xl bg-brand p-4 text-white dark:text-[#0E1511]">
+        <section className="rounded-3xl bg-brand p-4 text-white dark:text-[#0D331F]">
           <p className="text-xs font-semibold uppercase tracking-wide opacity-80">Ingresos de hoy</p>
           <p className="mt-0.5 text-3xl font-extrabold tabular-nums tracking-tight">{soles(cierre.ingresos)}</p>
           <p className="mt-0.5 text-xs opacity-85">

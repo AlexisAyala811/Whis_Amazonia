@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { AlertTriangle, Bell, Home, Leaf, Moon, Package, Plus, Sun, UserRound, Zap } from 'lucide-react';
+import { AlertTriangle, Bell, Home, Moon, Package, Plus, Sun, UserRound, Zap } from 'lucide-react';
 import { AddBatchSheet } from './components/AddBatchSheet';
 import { Bienvenida, debeMostrarEntrada } from './components/Bienvenida';
 import { BatchesView } from './components/BatchesView';
@@ -96,26 +96,9 @@ export default function App() {
       {/* Cabecera */}
       <header className="glass sticky top-0 z-30 border-b border-line pt-[env(safe-area-inset-top)]">
         <div className="flex h-16 items-center gap-2.5 px-4">
-          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-brand text-white dark:text-[#0E1511]">
-            <Leaf size={20} strokeWidth={2.4} />
-          </span>
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-1.5">
-              <img src={`${import.meta.env.BASE_URL}logo-whis.png`} alt="Whis" className="h-[18px] w-auto dark:invert" />
-              <span
-                className={`pill bg-ok/15 px-2 py-0.5 text-[10px] uppercase tracking-wide text-ok ${
-                  data.modo === 'demo' && !primeraVez ? 'max-[389px]:hidden' : ''
-                }`}
-              >
-                Amazonia
-              </span>
-              {data.modo === 'demo' && !primeraVez && (
-                <button onClick={() => setAjustes(true)} className="pill bg-warn/15 px-2 py-0.5 text-[10px] uppercase text-warn" title="Estás viendo datos de ejemplo">
-                  Demo
-                </button>
-              )}
-            </div>
-            <p className="truncate text-[11px] text-muted">Cuida tu mercadería, evita pérdidas</p>
+          <div className="flex min-w-0 flex-1 items-center gap-2">
+            <span role="img" aria-label="Whis" className="logo-whis h-9 shrink-0 text-brand" />
+            <span className="pill bg-brand/10 px-2 py-0.5 text-[10px] uppercase tracking-wide text-brand">Amazonia</span>
           </div>
           <button
             onClick={toggleTema}
@@ -128,7 +111,7 @@ export default function App() {
           <button
             onClick={() => setAjustes(true)}
             aria-label="Ajustes"
-            className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-brand text-white transition-all duration-200 active:scale-95 dark:text-[#0E1511]"
+            className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-brand text-white transition-all duration-200 active:scale-95 dark:text-[#0D331F]"
           >
             <UserRound size={19} />
           </button>
@@ -180,7 +163,7 @@ export default function App() {
             aria-label="Registrar nuevo lote"
             className="group flex flex-col items-center gap-0.5 text-[10.5px] font-semibold text-muted"
           >
-            <span className="-mt-7 grid h-[60px] w-[60px] place-items-center rounded-full bg-brand text-white shadow-[0_10px_24px_-8px_rgb(var(--brand)/0.8)] ring-[5px] ring-canvas transition-all duration-200 ease-out group-active:scale-90 dark:text-[#0E1511]">
+            <span className="-mt-7 grid h-[60px] w-[60px] place-items-center rounded-full bg-brand text-white shadow-[0_10px_24px_-8px_rgb(var(--brand)/0.8)] ring-[5px] ring-canvas transition-all duration-200 ease-out group-active:scale-90 dark:text-[#0D331F]">
               <Plus size={28} strokeWidth={2.6} />
             </span>
             Registrar
