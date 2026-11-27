@@ -1,6 +1,8 @@
 import { useRef, useState, type ReactNode } from 'react';
 import {
   AlertTriangle,
+  ClipboardCheck,
+  Compass,
   Database,
   Download,
   FileJson,
@@ -29,6 +31,8 @@ interface Props {
   toggleTema: () => void;
   onProductos: () => void;
   onEntrada: () => void;
+  onGuia: () => void;
+  onCierre: () => void;
 }
 
 type Confirmacion =
@@ -47,7 +51,7 @@ const textoRespaldo = (dias: number | null) => {
   return `Último respaldo: hace ${dias} días`;
 };
 
-export function SettingsSheet({ open, onClose, tema, toggleTema, onProductos, onEntrada }: Props) {
+export function SettingsSheet({ open, onClose, tema, toggleTema, onProductos, onEntrada, onGuia, onCierre }: Props) {
   const { data, productos, guardadoOk, empezarVacio, cargarDemo, reemplazarDatos, recuperacion, descartarRecuperacion } =
     useWhisStore();
   const toast = useToast();
@@ -138,6 +142,22 @@ export function SettingsSheet({ open, onClose, tema, toggleTema, onProductos, on
           titulo="Pantalla de bienvenida"
           detalle="Ver la demo o empezar con tus datos"
           onClick={onEntrada}
+        />
+
+        <Fila
+          clase={fila}
+          icono={<span className={icono}><Compass size={18} /></span>}
+          titulo="Guía rápida"
+          detalle="Cómo usar Whis en 4 pasos"
+          onClick={onGuia}
+        />
+
+        <Fila
+          clase={fila}
+          icono={<span className={icono}><ClipboardCheck size={18} /></span>}
+          titulo="Cierre del día"
+          detalle="Resumen de hoy para enviar por WhatsApp"
+          onClick={onCierre}
         />
 
         <Fila icono={<span className={icono}>{tema === 'dark' ? <Sun size={18} /> : <Moon size={18} />}</span>} clase={fila} onClick={toggleTema}

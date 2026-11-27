@@ -3,9 +3,11 @@ import { Bell, Home, Leaf, Moon, Package, Plus, Sun, UserRound, Zap } from 'luci
 import { AddBatchSheet } from './components/AddBatchSheet';
 import { Bienvenida, debeMostrarEntrada } from './components/Bienvenida';
 import { BatchesView } from './components/BatchesView';
+import { CierreDiaSheet } from './components/CierreDiaSheet';
 import { ColdChainView } from './components/ColdChainView';
 import { DashboardView } from './components/DashboardView';
 import { EditLoteSheet } from './components/EditLoteSheet';
+import { GuiaRapida, guiaVista } from './components/GuiaRapida';
 import { LiquidationView } from './components/LiquidationView';
 import { LoteAccionesSheet } from './components/LoteAccionesSheet';
 import { ProductosSheet } from './components/ProductosSheet';
@@ -41,6 +43,8 @@ export default function App() {
   const [entrada, setEntrada] = useState(debeMostrarEntrada);
   const [productos, setProductos] = useState(false);
   const [progreso, setProgreso] = useState(false);
+  const [cierre, setCierre] = useState(false);
+  const [guia, setGuia] = useState(false);
   const [accionesId, setAccionesId] = useState<string | null>(null);
   const [editarId, setEditarId] = useState<string | null>(null);
   const [salidaId, setSalidaId] = useState<string | null>(null);
@@ -62,6 +66,11 @@ export default function App() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [primeraVez]);
+
+  // Guía rápida: la primera vez que se entra con datos propios (no en la demo)
+  useEffect(() => {
+    if (!entrada && !primeraVez && data.modo === 'real' && !guiaVista()) setGuia(true);
+  }, [entrada, primeraVez, data.modo]);
 
   const buscar = (id: string | null) => activos.find((l) => l.id === id) ?? null;
   const criticos = activos.filter((l) => l.fefo.semaforo === 'rojo').length;
@@ -132,6 +141,7 @@ export default function App() {
             onRegistrar={() => setNuevoLote(true)}
             onRemates={() => irA('liquidar')}
             onAlertas={() => irA('frio')}
+            onCierre={() => setCierre(true)}
           />
         )}
         {vista === 'lotes' && <BatchesView onAbrir={abrirLote} onSalida={(l) => setSalidaId(l.id)} onLiquidar={liquidarLote} />}
@@ -182,6 +192,14 @@ export default function App() {
           setAjustes(false);
           setEntrada(true);
         }}
+        onGuia={() => {
+          setAjustes(false);
+          setGuia(true);
+        }}
+        onCierre={() => {
+          setAjustes(false);
+          setCierre(true);
+        }}
       />
       <ProductosSheet open={productos} onClose={() => setProductos(false)} />
       <LoteAccionesSheet
@@ -209,6 +227,8 @@ export default function App() {
       <ThermalChartModal lote={buscar(curvaId)} onClose={() => setCurvaId(null)} />
       <WasteAuditModal lote={buscar(bajaId)} onClose={() => setBajaId(null)} />
       <ProgresoSheet open={progreso} onClose={() => setProgreso(false)} />
+      <CierreDiaSheet open={cierre} onClose={() => setCierre(false)} />
+      <GuiaRapida open={guia} onClose={() => setGuia(false)} />
       <UndoBar />
       <Celebracion onVerProgreso={() => setProgreso(true)} />
     </div>
