@@ -16,7 +16,7 @@ import { ThermalChartModal } from './components/ThermalChartModal';
 import { UndoBar } from './components/UndoBar';
 import { WasteAuditModal } from './components/WasteAuditModal';
 import { useToast } from './components/ui/Toast';
-import { useOnline, useTheme } from './hooks/useDevice';
+import { useEspacioInsignia, useOnline, useTheme } from './hooks/useDevice';
 import { useWhisStore } from './hooks/useWhisStore';
 import type { Vista } from './types';
 import type { LoteFefo } from './utils/fefoEngine';
@@ -32,6 +32,7 @@ const TABS: { id: Vista; label: string; icon: typeof Home }[] = [
 export default function App() {
   const online = useOnline();
   const [tema, toggleTema] = useTheme();
+  useEspacioInsignia();
   const { activos, data, primeraVez, recuperacion } = useWhisStore();
   const toast = useToast();
   const [vista, setVista] = useState<Vista>('inicio');
@@ -119,7 +120,7 @@ export default function App() {
         </div>
       </header>
 
-      <main key={vista} className="animate-fade-in px-4 pb-32 pt-4 md:px-6">
+      <main key={vista} className="animate-fade-in px-4 pb-[calc(8rem+var(--insignia,0px))] pt-4 md:px-6">
         {vista === 'inicio' && (
           <DashboardView
             online={online}
@@ -139,7 +140,7 @@ export default function App() {
       </main>
 
       {/* Barra inferior */}
-      <nav className="fixed inset-x-0 bottom-0 z-40 mx-auto max-w-md border-t md:max-w-3xl border-line bg-surface pb-[env(safe-area-inset-bottom)] shadow-[0_-8px_24px_-16px_rgb(0_0_0/0.25)]">
+      <nav className="fixed inset-x-0 bottom-0 z-40 mx-auto max-w-md border-t md:max-w-3xl border-line bg-surface pb-[calc(env(safe-area-inset-bottom)+var(--insignia,0px))] shadow-[0_-8px_24px_-16px_rgb(0_0_0/0.25)]">
         <div className="grid grid-cols-5 items-end px-1 pb-1.5 pt-1">
           {TABS.slice(0, 2).map((t) => (
             <TabBtn key={t.id} tab={t} activo={vista === t.id} onClick={() => irA(t.id)} />
