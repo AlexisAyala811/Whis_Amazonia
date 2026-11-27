@@ -97,7 +97,7 @@ export function BottomSheet({ open, onClose, title, subtitle, children, footer, 
             </button>
           </div>
         )}
-        <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-5">{children}</div>
+        <div className={`min-h-0 flex-1 overflow-y-auto px-5 ${footer ? 'pb-5' : 'pb-[calc(1.25rem+var(--insignia,0px))]'}`}>{children}</div>
         {footer && <div className="border-t border-line px-5 pb-safe pt-3 [&>*]:mb-3">{footer}</div>}
       </div>
     </div>,

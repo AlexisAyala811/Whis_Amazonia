@@ -52,7 +52,7 @@ export function Bienvenida({ open, onEntrar }: Props) {
 
   return (
     <div className="fixed inset-0 z-[60] overflow-y-auto bg-canvas" role="dialog" aria-modal="true" aria-label="Bienvenida a Whis Amazonia">
-      <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col gap-5 px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-[max(1.5rem,env(safe-area-inset-top))] md:max-w-4xl md:flex-row md:items-center md:gap-8 md:px-8">
+      <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col gap-5 px-4 pb-[calc(max(1.5rem,env(safe-area-inset-bottom))+var(--insignia,0px))] pt-[max(1.5rem,env(safe-area-inset-top))] md:max-w-4xl md:flex-row md:items-center md:gap-8 md:px-8">
         {/* Portada de marca */}
         <section className="relative animate-fade-in overflow-hidden rounded-[2rem] bg-brand p-6 text-white md:flex-1 md:p-8 dark:text-[#0E1511]">
           <div className="pointer-events-none absolute -right-10 -top-10 h-44 w-44 rounded-full bg-white/10" />
